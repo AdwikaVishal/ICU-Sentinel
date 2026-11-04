@@ -1,0 +1,25 @@
+# ICU Sentinel - Part 1 dependencies
+# Core
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Machine learning
+scikit-learn>=1.3.0
+
+# Web framework (P1 patient APIs)
+fastapi>=0.100.0
+uvicorn[standard]>=0.22.0
+
+# Data serialization
+pyarrow>=10.0.0
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Documentation (mkdocs)
+mkdocs>=1.4.0
+
+# Linting / formatting
+ruff>=0.1.0
+mypy>=1.0.0

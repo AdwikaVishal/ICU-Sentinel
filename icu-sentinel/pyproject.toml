@@ -1,0 +1,14 @@
+[tool.pytest.ini_options]
+testpaths = ["ml/p1_clinical/tests", "tests"]
+addopts = "-q --cov=ml --cov=backend --cov-report=term-missing --cov-report=html:htmlcov"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+markers = [
+    "unit: unit tests",
+    "integration: integration tests",
+    "baseline: clinical baseline tests",
+    "feature: feature engineering tests",
+    "api: patient API tests",
+]
