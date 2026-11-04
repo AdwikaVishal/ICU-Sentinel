@@ -1,0 +1,107 @@
+/**
+ * ICU Sentinel design tokens.
+ *
+ * The palette is intentionally green-first with warm off-white surfaces.
+ * Components should consume these variables rather than hard-coded colours.
+ */
+:root {
+  /* Brand greens */
+  --green-950: #1d3b25;
+  --green-900: #2a5233;
+  --green-800: #315f3c;
+  --green-700: #477c50;
+  --green-600: #6e9874;
+  --green-500: #87ac89;
+  --green-400: #a9c9a3;
+  --green-300: #c7ddbf;
+  --green-200: #e5f0de;
+  --green-100: #f2f7ed;
+  --green-50: #f8fbf5;
+
+  /* Neutrals */
+  --bg: #f5f7f1;
+  --bg-deep: #eff3ea;
+  --surface: #ffffff;
+  --surface-soft: #fbfcf9;
+  --surface-muted: #f4f7f0;
+  --ink: #18231c;
+  --ink-soft: #33453a;
+  --muted: #748078;
+  --muted-strong: #5f6d64;
+  --muted-light: #93a096;
+  --border: #e1e9de;
+  --border-strong: #d2dece;
+
+  /* Semantic accents */
+  --success: #4e9b64;
+  --success-soft: #e7f3e9;
+  --success-ink: #2f6d40;
+  --warning: #e5a844;
+  --warning-soft: #fbf1df;
+  --warning-ink: #8f5c11;
+  --critical: #dc655b;
+  --critical-soft: #fbeae8;
+  --critical-ink: #a63d35;
+  --info: #6d9db1;
+  --info-soft: #eaf3f6;
+  --info-ink: #3f7389;
+  --cream: #f8f3e9;
+  --cream-strong: #f0e6d4;
+  --lilac: #f0eef8;
+  --lilac-ink: #6a6390;
+
+  /* Sidebar */
+  --sidebar-bg: #2d5738;
+  --sidebar-bg-soft: #356341;
+  --sidebar-ink: #f1f7ed;
+  --sidebar-muted: #c0d4bb;
+  --sidebar-active: rgba(255, 255, 255, 0.15);
+  --sidebar-hover: rgba(255, 255, 255, 0.08);
+
+  /* Shapes */
+  --radius-xs: 10px;
+  --radius-sm: 14px;
+  --radius-md: 18px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-2xl: 34px;
+  --radius-pill: 999px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px rgba(24, 35, 28, 0.04);
+  --shadow-sm: 0 6px 24px rgba(49, 95, 60, 0.06);
+  --shadow-md: 0 16px 44px rgba(49, 95, 60, 0.09);
+  --shadow-lg: 0 30px 80px rgba(49, 95, 60, 0.14);
+  --shadow-card: 0 2px 4px rgba(24, 35, 28, 0.02),
+    0 12px 36px rgba(49, 95, 60, 0.07);
+
+  /* Layout */
+  --sidebar-width: 178px;
+  --content-max: 1360px;
+  --topbar-gap: 20px;
+
+  /* Type */
+  --font-sans: "Plus Jakarta Sans", "Inter", "Segoe UI", system-ui,
+    -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-fast: 150ms var(--ease);
+  --transition: 220ms var(--ease);
+  --transition-slow: 380ms var(--ease);
+
+  color-scheme: light;
+}

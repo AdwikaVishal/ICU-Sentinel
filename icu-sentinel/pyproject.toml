@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-testpaths = ["ml/p1_clinical/tests", "tests"]
+testpaths = ["ml/p1_clinical/tests", "ml/p3_temporal/tests", "tests"]
 addopts = "-q --cov=ml --cov=backend --cov-report=term-missing --cov-report=html:htmlcov"
 filterwarnings = [
     "ignore::DeprecationWarning",

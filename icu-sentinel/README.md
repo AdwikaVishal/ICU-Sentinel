@@ -73,6 +73,33 @@ Endpoints:
 - `GET /patients/{id}/timeline`
 - `GET /patients/{id}/features`
 
+## P3 research prototype (replay, SHAP, alerts)
+
+P3 adds a retrospective Patient Replay Engine, genuine SHAP explanations and a
+persisted alert workflow, plus a React/TypeScript UI. It uses the synthetic
+demo cohort unless a processed-data directory and P1 artifact are configured.
+Nothing in P3 is a diagnosis or a clinically validated early-warning system.
+
+```bash
+# Backend (from the repository root)
+PYTHONPATH=. python3 -m uvicorn backend.p3.app:app --host 127.0.0.1 --port 8000
+
+# Frontend (second terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+Open <http://127.0.0.1:5173>. Run P3 tests with:
+
+```bash
+python3 -m pytest ml/p3_temporal/tests tests/test_p3_api.py -q -o addopts=''
+cd frontend && npm test && npm run typecheck && npm run build
+```
+
+Documentation: `docs/p3/` (architecture, causality/leakage, explainability,
+alerts, API reference, demo guide, implementation report).
+
 ## Scientific principles (P1)
 
 - Follow the official PhysioNet/CinC Challenge 2019 label convention.

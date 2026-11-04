@@ -138,3 +138,9 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/.env.local
