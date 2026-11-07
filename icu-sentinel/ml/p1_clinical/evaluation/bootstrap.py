@@ -16,6 +16,17 @@ from .evaluation_schema import BootstrapResult, BootstrapSummary
 
 logger = logging.getLogger("icu_sentinel.p1_clinical.evaluation.bootstrap")
 
+SUPPORTED_METRICS = (
+    "auroc",
+    "auprc",
+    "sensitivity",
+    "specificity",
+    "precision",
+    "f1",
+    "accuracy",
+    "brier",
+)
+
 
 def compute_bootstrap_confidence_intervals(
     predictions_df: pd.DataFrame,
@@ -33,11 +44,12 @@ def compute_bootstrap_confidence_intervals(
     Parameters
     ----------
     predictions_df : pd.DataFrame
-        DataFrame with patient_id, true_label, predicted_probability.
+        DataFrame with patient_id, true_label, predicted_probability and
+        predicted_class columns.
     model_name : str
         Name of the model.
     model_version : str
-        Version of the model.
+        Model version.
     split : str
         Split identity (train/validation/test).
     metric_names : list[str]
@@ -58,10 +70,31 @@ def compute_bootstrap_confidence_intervals(
     BootstrapSummary
         Bootstrap confidence interval summary.
     """
-    required_cols = ["patient_id", "true_label", "predicted_probability"]
+    required_cols = [
+        "patient_id",
+        "true_label",
+        "predicted_probability",
+        "predicted_class",
+    ]
     missing = [c for c in required_cols if c not in predictions_df.columns]
     if missing:
         raise ValueError(f"Missing required columns: {missing}")
+
+    if n_iterations <= 0:
+        raise ValueError(f"n_iterations must be positive, got {n_iterations}.")
+    if not 0 < confidence_level < 1:
+        raise ValueError(
+            f"confidence_level must be in (0, 1), got {confidence_level}."
+        )
+    if not metric_names:
+        raise ValueError("metric_names must contain at least one metric.")
+
+    unknown_metrics = [m for m in metric_names if m not in SUPPORTED_METRICS]
+    if unknown_metrics:
+        raise ValueError(
+            f"Unsupported bootstrap metrics: {unknown_metrics}. "
+            f"Supported metrics: {list(SUPPORTED_METRICS)}."
+        )
 
     rng = np.random.default_rng(random_seed)
 
@@ -78,53 +111,65 @@ def compute_bootstrap_confidence_intervals(
             source=source,
         )
 
-    # Map metric names to computation functions
+    # Map metric names to functions with a uniform (y_true, y_pred, y_prob)
+    # signature. Each function ignores the inputs it does not need.
     metric_funcs = {
-        "auroc": lambda y_true, y_pred, y_prob: _safe_roc_auc(y_true, y_prob),
-        "auprc": lambda y_true, y_pred, y_prob: _safe_auprc(y_true, y_prob),
-        "sensitivity": lambda y_true, y_pred, y_prob: _safe_sensitivity(y_true, y_pred),
-        "specificity": lambda y_true, y_pred, y_prob: _safe_specificity(y_true, y_pred),
-        "precision": lambda y_true, y_pred, y_prob: _safe_precision(y_true, y_pred),
-        "f1": lambda y_true, y_pred, y_prob: _safe_f1(y_true, y_pred, y_prob),
-        "accuracy": lambda y_true, y_pred, y_prob: _safe_accuracy(y_true, y_pred, y_prob),
-        "brier": lambda y_true, y_pred, y_prob: _safe_brier(y_true, y_pred, y_prob),
+        "auroc": _safe_roc_auc,
+        "auprc": _safe_auprc,
+        "sensitivity": _safe_sensitivity,
+        "specificity": _safe_specificity,
+        "precision": _safe_precision,
+        "f1": _safe_f1,
+        "accuracy": _safe_accuracy,
+        "brier": _safe_brier,
     }
+
+    # Precompute patient row positions once so each bootstrap iteration only
+    # gathers integer indices. Values and row order match repeated boolean
+    # filtering of the original frame, including first-appearance patient
+    # order within each resample.
+    row_positions_by_patient = predictions_df.groupby(
+        "patient_id", sort=False
+    ).indices
+    true_labels = predictions_df["true_label"].astype(int).to_numpy()
+    predicted_classes = predictions_df["predicted_class"].astype(int).to_numpy()
+    probabilities = predictions_df["predicted_probability"].astype(float).to_numpy()
 
     # Collect bootstrap samples for each metric
-    bootstrap_samples: dict[str, list[float]] = {
-        m: [] for m in metric_names if m in metric_funcs
-    }
+    bootstrap_samples: dict[str, list[float]] = {m: [] for m in metric_names}
 
     for iteration in range(n_iterations):
-        # Resample patients with replacement
+        # Resample patients with replacement. This call is intentionally kept
+        # identical to the original implementation to preserve seeded draws.
         sampled_patient_ids = rng.choice(patient_ids, size=n_patients, replace=True)
 
-        # Build bootstrap sample by concatenating all rows for sampled patients
-        sampled_rows = []
+        sampled_positions = []
+        total_rows = 0
         for pid in sampled_patient_ids:
-            patient_rows = predictions_df[predictions_df["patient_id"] == pid]
-            sampled_rows.append(patient_rows)
+            positions = row_positions_by_patient.get(pid)
+            if positions is not None and len(positions) > 0:
+                sampled_positions.append(positions)
+                total_rows += len(positions)
 
-        if not sampled_rows:
-            continue
-
-        bootstrap_df = pd.concat(sampled_rows, ignore_index=True)
+        row_indices = np.empty(total_rows, dtype=np.intp)
+        cursor = 0
+        for positions in sampled_positions:
+            row_indices[cursor:cursor + len(positions)] = positions
+            cursor += len(positions)
 
         # Compute metrics for each metric
-        y_true = bootstrap_df["true_label"].astype(int).values
-        y_pred = bootstrap_df["predicted_class"].astype(int).values
-        y_prob = bootstrap_df["predicted_probability"].astype(float).values
+        y_true = true_labels[row_indices]
+        y_pred = predicted_classes[row_indices]
+        y_prob = probabilities[row_indices]
 
         for metric_name in metric_names:
-            if metric_name not in metric_funcs:
-                continue
             metric_func = metric_funcs[metric_name]
-            try:
-                value = metric_func(y_true, y_pred, y_prob)
-                if np.isfinite(value):
-                    bootstrap_samples[metric_name].append(value)
-            except Exception:
-                pass
+            # Undefined metrics (e.g. AUROC on a single-class resample) return
+            # NaN by design. Unexpected programming errors are not caught here
+            # and propagate so they cannot be silently hidden.
+            value = metric_func(y_true, y_pred, y_prob)
+            if np.isfinite(value):
+                bootstrap_samples[metric_name].append(value)
 
     # Compute confidence intervals
     bootstrap_results: list[BootstrapResult] = []
@@ -133,7 +178,13 @@ def compute_bootstrap_confidence_intervals(
     upper_percentile = (1 - alpha / 2) * 100
 
     for metric_name in metric_names:
-        if metric_name not in bootstrap_samples or not bootstrap_samples[metric_name]:
+        if not bootstrap_samples[metric_name]:
+            logger.warning(
+                "Bootstrap metric '%s' was undefined in all %d resamples "
+                "(e.g. single-class resamples) and is omitted from the summary.",
+                metric_name,
+                n_iterations,
+            )
             continue
 
         samples = np.array(bootstrap_samples[metric_name])
@@ -173,8 +224,15 @@ def _safe_roc_auc(y_true, y_pred, y_prob):
 
 
 def _safe_auprc(y_true, y_pred, y_prob):
-    """Safe AUPRC computation returning NaN on failure."""
+    """Safe AUPRC computation returning NaN when undefined.
+
+    Average precision is undefined without any positive labels, so this is
+    treated as explicitly undefined rather than silently returning 0.0.
+    """
     from sklearn.metrics import average_precision_score
+
+    if not np.any(y_true == 1):
+        return float("nan")
     try:
         return float(average_precision_score(y_true, y_prob))
     except ValueError:

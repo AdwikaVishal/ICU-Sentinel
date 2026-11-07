@@ -1,0 +1,200 @@
+{
+  "bootstrap": {
+    "accuracy": {
+      "ci_lower": 0.83125,
+      "ci_upper": 0.91875,
+      "n_iterations": 100,
+      "n_patients": 40,
+      "point_estimate": 0.8763124999999999
+    },
+    "auprc": {
+      "ci_lower": 0.864406828564019,
+      "ci_upper": 0.9697076440289609,
+      "n_iterations": 100,
+      "n_patients": 40,
+      "point_estimate": 0.92280424933047
+    },
+    "auroc": {
+      "ci_lower": 0.8838719324374453,
+      "ci_upper": 0.9633118893856599,
+      "n_iterations": 100,
+      "n_patients": 40,
+      "point_estimate": 0.9214674968859469
+    },
+    "brier": {
+      "ci_lower": 0.10618430389222056,
+      "ci_upper": 0.1461933404655603,
+      "n_iterations": 100,
+      "n_patients": 40,
+      "point_estimate": 0.12809535790688623
+    },
+    "f1": {
+      "ci_lower": 0.8230313092979127,
+      "ci_upper": 0.9282433712121212,
+      "n_iterations": 100,
+      "n_patients": 40,
+      "point_estimate": 0.8825484609830074
+    },
+    "precision": {
+      "ci_lower": 0.7941713483146068,
+      "ci_upper": 0.9513854425144748,
+      "n_iterations": 100,
+      "n_patients": 40,
+      "point_estimate": 0.8714519273423963
+    },
+    "sensitivity": {
+      "ci_lower": 0.8365111301369863,
+      "ci_upper": 0.9468392432309958,
+      "n_iterations": 100,
+      "n_patients": 40,
+      "point_estimate": 0.8954418271813778
+    },
+    "specificity": {
+      "ci_lower": 0.7559822845055526,
+      "ci_upper": 0.9394064872325741,
+      "n_iterations": 100,
+      "n_patients": 40,
+      "point_estimate": 0.8533042045490327
+    }
+  },
+  "loader": {
+    "feature_names": [
+      "AST",
+      "Age",
+      "Alkalinephos",
+      "BUN",
+      "BaseExcess",
+      "Bilirubin_direct",
+      "Bilirubin_total",
+      "Calcium",
+      "Chloride",
+      "Creatinine",
+      "DBP",
+      "EtCO2",
+      "FiO2",
+      "Fibrinogen",
+      "Gender",
+      "Glucose",
+      "HCO3",
+      "HR",
+      "Hct",
+      "Hgb",
+      "HospAdmTime",
+      "ICULOS",
+      "Lactate",
+      "MAP",
+      "Magnesium",
+      "O2Sat",
+      "PTT",
+      "PaCO2",
+      "Phosphate",
+      "Platelets",
+      "Potassium",
+      "Resp",
+      "SBP",
+      "SaO2",
+      "Temp",
+      "TroponinI",
+      "Unit1",
+      "Unit2",
+      "WBC",
+      "pH"
+    ],
+    "splits": {
+      "test": {
+        "hour_sha256": "c90d0dd9c636baa35c87d6cc604de47e496f8c3c616430469760d553921501c5",
+        "n_negative": 5,
+        "n_patients": 1,
+        "n_positive": 3,
+        "n_rows": 8,
+        "patient_id_sha256": "b43fcc464c88b6ff5233551391e78ab410bf01615cbfd18b9bc976009ebe4d0f",
+        "x_sha256": "1ac89ba0e16c6d3c00b09cf16ea8ed311dfa503f05473e613956062f4527068c",
+        "y_sha256": "0f25607983088ab14f87903905d28de7f046b36ea1778018418d289b660cc21e"
+      },
+      "train": {
+        "hour_sha256": "c96d14a8718e10e52d8af2ed40cf206d2f5a0bfb294249c1818ff1c3e5939c2c",
+        "n_negative": 13,
+        "n_patients": 3,
+        "n_positive": 9,
+        "n_rows": 22,
+        "patient_id_sha256": "dab070bf8430a788c31960477ebae2cc65d40c9a74dddd68d0f01a0620549e82",
+        "x_sha256": "61da03f55091314559664789b1dd2446102e265ffc9fdcacb8e338a9c29e1bbe",
+        "y_sha256": "31f1592591d06037875de6f71cedb59383aad31861dd00e4a61d285cd8c322ca"
+      },
+      "validation": {
+        "hour_sha256": "1f1a38ac34f9297563e1d4715f45896d4666103fff27676b674167d294ebf24a",
+        "n_negative": 5,
+        "n_patients": 2,
+        "n_positive": 6,
+        "n_rows": 11,
+        "patient_id_sha256": "23f20b777748bd555db9dceb8c2ceee9aa052cc4a842494e19ba4acd8d5bd678",
+        "x_sha256": "76bf7ee467dd9cb049b2897caeec595b51e5b0f35151c2d1d4ae0b64d9f49d5c",
+        "y_sha256": "0c9bc11ea00dd9efc143f5e6ed7bd77d27b0f935c2300ac110aef7b59be6ffcf"
+      }
+    }
+  },
+  "model_predictions": {
+    "extra_trees": {
+      "class_sha256": "a1ecb5b5d29d29f83b1948b51e5fa9479e5987c29dcc1c8cf6f399fa79a3a488",
+      "probability_sha256": "f697c86f933eeeed4f168983137a7315e5616b181bb8497e5483a86b3069edd5"
+    },
+    "xgboost": {
+      "class_sha256": "a642d88f2217c0d642a926d23b29c103351d08e7ddd7aca3b62b0aaa047d5b1f",
+      "probability_sha256": "1eb8f478d8977bf7fce590304fc98d172e1180562f0054d6455eaa952c455c17"
+    }
+  },
+  "p2_training": {
+    "metrics": {
+      "extra_trees": {
+        "test": {
+          "auprc": 0.9014688617526648,
+          "auroc": 0.8922857142857143,
+          "f1": 0.8551724137931035,
+          "n_rows": 120,
+          "threshold": 0.31
+        },
+        "train": {
+          "auprc": 1.0,
+          "auroc": 1.0,
+          "f1": 1.0,
+          "n_rows": 120,
+          "threshold": 0.5
+        },
+        "validation": {
+          "auprc": 0.861703146205748,
+          "auroc": 0.8808398220244716,
+          "f1": 0.8281250000000001,
+          "n_rows": 120,
+          "threshold": 0.31
+        }
+      },
+      "xgboost": {
+        "test": {
+          "auprc": 0.9421318555795946,
+          "auroc": 0.917,
+          "f1": 0.8759124087591241,
+          "n_rows": 120,
+          "threshold": 0.43
+        },
+        "train": {
+          "auprc": 0.9952634931413336,
+          "auroc": 0.9960718294051628,
+          "f1": 0.9541284403669724,
+          "n_rows": 120,
+          "threshold": 0.5
+        },
+        "validation": {
+          "auprc": 0.9039880558637395,
+          "auroc": 0.907258064516129,
+          "f1": 0.8448275862068967,
+          "n_rows": 120,
+          "threshold": 0.43
+        }
+      }
+    },
+    "thresholds": {
+      "extra_trees": 0.31,
+      "xgboost": 0.43
+    }
+  }
+}
