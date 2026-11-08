@@ -131,7 +131,7 @@ class PhysioNetChallenge2019Loader:
         root: str | Path,
         columns: list[str] | None = None,
         separator: str = "|",
-        na_values: list[str] | None = None,
+        na_values: list[str | None] | None = None,
     ) -> None:
         self.root = Path(root)
         self.columns = columns or REQUIRED_COLUMNS
@@ -205,11 +205,15 @@ class PhysioNetChallenge2019Loader:
             self.logger.error("File does not exist: %s", path)
             return None
 
+        # Official PhysioNet PSV files carry a header row; test fixtures and
+        # some derived files do not. Detect it instead of assuming either.
+        has_header = self._file_has_header(path)
         try:
             df = pd.read_csv(
                 path,
                 sep=self.separator,
-                names=self.columns,
+                header=0 if has_header else None,
+                names=None if has_header else self.columns,
                 na_values=self.na_values,
                 dtype={c: "float64" for c in self.columns if c not in ("Age", "Gender", "Unit1", "Unit2", "SepsisLabel")},
             )
@@ -223,6 +227,19 @@ class PhysioNetChallenge2019Loader:
                 df[int_col] = pd.to_numeric(df[int_col], errors="coerce")
 
         return df
+
+    def _file_has_header(self, path: Path) -> bool:
+        """Return True when the first line is the official column header."""
+        try:
+            with open(path, encoding="utf-8-sig") as handle:
+                first_line = handle.readline().strip()
+        except OSError as exc:
+            self.logger.warning("Cannot inspect %s: %s", path, exc)
+            return False
+        if not first_line:
+            return False
+        tokens = [token.strip() for token in first_line.split(self.separator)]
+        return tokens == list(self.columns)
 
     def load_patient_result(self, patient_id: str) -> LoadResult | None:
         """Load a patient file and return a LoadResult with summary stats."""

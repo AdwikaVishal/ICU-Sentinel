@@ -2,8 +2,25 @@
 
 **Project:** ICU Sentinel  
 **Owner:** Person 1 (P1)  
-**Scope:** All P1-assigned responsibilities across the 7-part implementation  
-**sequence.** Current status reflects completion of PART 1 only.
+**Scope:** All P1-assigned responsibilities across the 7-part implementation
+sequence.
+
+> **Status update (2026-11-06).** The per-part tables below are the original
+> PART 1 planning baseline and are retained for history. They are no longer
+> the current status. Current verified state:
+>
+> - Parts 2–7 code is implemented (ingestion, preprocessing, features,
+>   baselines, classical ML, evaluation) and the P1 test suite passes.
+> - The strict 6h pre-onset target (`sepsis_within_6h` + `target_eligible`)
+>   is implemented and `SepsisLabel` is preserved unchanged.
+> - Training now evaluates on validation, selects thresholds on validation
+>   only, and evaluates the frozen models once on test.
+> - P1 patient API is implemented as read-only over processed artefacts.
+> - Real-data artefacts remain **BLOCKED**: the PhysioNet/CinC 2019 dataset
+>   is not present in `data/raw/`. Synthetic fixtures are test-only and are
+>   not reported as real results.
+> - P2 is still unimplemented (`ml/p2_boosting/`), so the P2 handover is a
+>   contract/readiness report rather than completed P2 code.
 
 ## Overview
 

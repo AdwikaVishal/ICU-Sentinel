@@ -37,12 +37,13 @@ def add_missingness_indicators(
     """
     vars_ = variables or FEATURE_VARIABLES
     out = df.copy()
+    features: dict[str, np.ndarray] = {}
     for var in vars_:
         if var in out.columns:
-            out[f"{var}_is_missing"] = out[var].isna().astype(int)
+            features[f"{var}_is_missing"] = out[var].isna().astype(int).to_numpy()
         else:
-            out[f"{var}_is_missing"] = 1
-    return out
+            features[f"{var}_is_missing"] = np.ones(len(out), dtype=int)
+    return pd.concat([out, pd.DataFrame(features, index=out.index)], axis=1)
 
 
 def add_time_since_last_measurement(
@@ -69,10 +70,11 @@ def add_time_since_last_measurement(
 
     hours = out[hour_column].to_numpy()
     n = len(out)
+    features: dict[str, np.ndarray] = {}
 
     for var in vars_:
         if var not in out.columns:
-            out[f"{var}_hours_since_last"] = np.inf
+            features[f"{var}_hours_since_last"] = np.full(n, np.inf, dtype=float)
             continue
 
         values = out[var].to_numpy()
@@ -93,9 +95,9 @@ def add_time_since_last_measurement(
                     # Never observed up to this hour.
                     result[i] = np.inf
 
-        out[f"{var}_hours_since_last"] = result
+        features[f"{var}_hours_since_last"] = result
 
-    return out
+    return pd.concat([out, pd.DataFrame(features, index=out.index)], axis=1)
 
 
 def add_measurement_availability(
@@ -123,10 +125,11 @@ def add_measurement_availability(
 
     hours = out[hour_column].to_numpy()
     n = len(out)
+    features: dict[str, np.ndarray] = {}
 
     for var in vars_:
         if var not in out.columns:
-            out[f"{var}_availability_{window_hours}h"] = 0.0
+            features[f"{var}_availability_{window_hours}h"] = np.zeros(n, dtype=float)
             continue
 
         values = out[var].to_numpy()
@@ -149,9 +152,9 @@ def add_measurement_availability(
             else:
                 result[i] = 0.0
 
-        out[f"{var}_availability_{window_hours}h"] = result
+        features[f"{var}_availability_{window_hours}h"] = result
 
-    return out
+    return pd.concat([out, pd.DataFrame(features, index=out.index)], axis=1)
 
 
 def compute_missingness_features(

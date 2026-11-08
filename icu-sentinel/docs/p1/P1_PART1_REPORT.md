@@ -58,15 +58,16 @@ icu-sentinel/
 
 ## 2. Dependencies installed
 
-Installed via `pip install -r requirements.txt` into `.venv` (Python 3.15.0).
+Verified environment (2026-11-06): Python 3.11.9 with the packages below
+actually installed in the active interpreter. Earlier revisions of this
+report listed an unverified future Python/package set; use `pip freeze`
+for the authoritative environment.
 
-Runtime: `pandas 3.1.0`, `numpy 2.5.4`, `scikit-learn 1.9.1`, `fastapi
-0.162.0`, `uvicorn 0.54.0`, `pyarrow 26.0.1`.
+Runtime: `pandas 2.3.3`, `numpy 1.26.4`, `scikit-learn 1.4.2`, `fastapi
+0.162.0`, `uvicorn 0.54.0`, `pyarrow 24.0.0`.
 
-Dev: `pytest 9.2.0`, `pytest-cov 7.1.0`, `ruff 0.17.3`, `mypy 2.4.1`,
-`mkdocs 1.6.1`.
-
-Full environment: 47 packages installed successfully; no errors.
+Dev: `pytest 8.4.2`, `pytest-cov 6.0.0`, `ruff 0.7.4`, `mypy 1.13.0`.
+`mkdocs` is not installed in the current environment.
 
 ## 3. Files created
 

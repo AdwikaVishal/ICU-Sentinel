@@ -170,7 +170,11 @@ def test_schema_serialization_roundtrip(tmp_path):
     assert "features" in data
     assert "identifier_columns" in data
     assert "target_columns" in data
-    assert data["target_columns"] == ["SepsisLabel"]
+    assert data["target_columns"] == [
+        "SepsisLabel",
+        "sepsis_within_6h",
+        "target_eligible",
+    ]
 
 
 def test_config_save_and_load(tmp_path):

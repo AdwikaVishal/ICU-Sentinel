@@ -156,3 +156,55 @@ def test_remove_highly_correlated():
 
 def rng_noise(n, seed):
     return np.random.default_rng(seed).normal(0, 0.001, size=n)
+
+
+# ------------------------------------------------------------------
+# Duplicate detection must compare the whole column, not just the head
+# ------------------------------------------------------------------
+
+
+def test_same_first_value_not_treated_as_duplicate():
+    df = pd.DataFrame(
+        {
+            "col_a": [1.0, 2.0, 3.0, 4.0],
+            "col_b": [1.0, 5.0, 6.0, 7.0],
+        }
+    )
+    selector = FeatureSelector(remove_duplicate=True)
+    out = selector.fit_transform(df)
+
+    assert "col_a" in out.columns
+    assert "col_b" in out.columns
+    assert selector.removed_features["duplicate"] == []
+
+
+def test_identical_columns_with_missing_values_are_duplicates():
+    df = pd.DataFrame(
+        {
+            "col_a": [1.0, np.nan, 3.0, np.nan],
+            "col_b": [1.0, np.nan, 3.0, np.nan],
+            "col_c": [1.0, np.nan, 3.0, 4.0],
+        }
+    )
+    selector = FeatureSelector(remove_duplicate=True)
+    out = selector.fit_transform(df)
+
+    assert "col_a" in out.columns
+    assert "col_b" not in out.columns
+    assert "col_c" in out.columns
+    assert selector.removed_features["duplicate"] == ["col_b"]
+
+
+def test_duplicate_detection_is_deterministic_and_keeps_first_column():
+    df = pd.DataFrame(
+        {
+            "first": [1.0, 2.0, 3.0],
+            "second": [1.0, 2.0, 3.0],
+            "third": [1.0, 2.0, 4.0],
+        }
+    )
+    first_run = FeatureSelector(remove_duplicate=True).fit_transform(df)
+    second_run = FeatureSelector(remove_duplicate=True).fit_transform(df)
+
+    assert list(first_run.columns) == list(second_run.columns)
+    assert list(first_run.columns) == ["first", "third"]

@@ -23,6 +23,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.impute import SimpleImputer
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -45,6 +46,8 @@ class SVMResult:
     training_metrics: dict = field(default_factory=dict)
     validation_metrics: dict = field(default_factory=dict)
     support_vectors: int | None = None
+    n_train_rows_used: int = 0
+    subsampled: bool = False
 
 
 def build_svm_pipeline(
@@ -133,8 +136,29 @@ def train_svm(
         selected_features=list(selected_features),
     )
 
-    X = X_train[selected_features].copy()
-    y = y_train.copy()
+    X = X_train if list(X_train.columns) == list(selected_features) else X_train[selected_features]
+    y = y_train
+
+    # RBF SVC cannot be fitted on the full hourly matrix. Use a seeded,
+    # class-stratified subsample when a cap is configured. This is a
+    # computational constraint and is recorded in the result metadata.
+    n_original_rows = len(X)
+    if config.svm_max_train_rows is not None and n_original_rows > config.svm_max_train_rows:
+        X, _, y, _ = train_test_split(
+            X,
+            y,
+            train_size=int(config.svm_max_train_rows),
+            stratify=y,
+            random_state=config.random_seed,
+        )
+        result.subsampled = True
+        logger.info(
+            "SVM training subsampled: %d -> %d rows (stratified, seed=%d)",
+            n_original_rows,
+            len(X),
+            config.random_seed,
+        )
+    result.n_train_rows_used = int(len(X))
 
     pipeline = build_svm_pipeline(config, selected_features)
     pipeline.fit(X, y)
@@ -206,7 +230,7 @@ def predict_svm(
     if result.model is None:
         raise ValueError("Model not trained. Call train_svm() first.")
 
-    X_sel = X[result.selected_features].copy()
+    X_sel = X if list(X.columns) == list(result.selected_features) else X[result.selected_features]
     y_prob = result.model.predict_proba(X_sel)[:, 1]
     y_pred = (y_prob >= threshold).astype(int)
 
@@ -293,7 +317,7 @@ def save_svm_artifact(
         n_features_input=0,
         n_features_output=len(result.selected_features),
         n_patients_train=0,
-        n_rows_train=0,
+        n_rows_train=result.n_train_rows_used,
         n_positive_train=0,
         n_negative_train=0,
         class_weight=None,

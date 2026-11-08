@@ -95,6 +95,7 @@ def add_rolling_features(
 
     hours = out[hour_column].to_numpy()
     n = len(out)
+    features: dict[str, np.ndarray] = {}
 
     for var in vars_:
         if var not in out.columns:
@@ -108,9 +109,11 @@ def add_rolling_features(
                     result[i] = _rolling_stat(
                         values, hours, i, window, agg, min_observations
                     )
-                out[col_name] = result
+                features[col_name] = result
 
-    return out
+    if not features:
+        return out
+    return pd.concat([out, pd.DataFrame(features, index=out.index)], axis=1)
 
 
 def compute_rolling_features(

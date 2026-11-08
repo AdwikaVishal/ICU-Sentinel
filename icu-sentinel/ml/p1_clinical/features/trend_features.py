@@ -84,6 +84,7 @@ def add_trend_features(
 
     hours = out[hour_column].to_numpy()
     n = len(out)
+    features: dict[str, np.ndarray] = {}
 
     for var in vars_:
         if var not in out.columns:
@@ -120,11 +121,13 @@ def add_trend_features(
                 if elapsed > 0:
                     slope_vals[i] = (float(cur) - ref_val) / elapsed
 
-            out[abs_col] = abs_vals
-            out[rel_col] = rel_vals
-            out[slope_col] = slope_vals
+            features[abs_col] = abs_vals
+            features[rel_col] = rel_vals
+            features[slope_col] = slope_vals
 
-    return out
+    if not features:
+        return out
+    return pd.concat([out, pd.DataFrame(features, index=out.index)], axis=1)
 
 
 def compute_trend_features(

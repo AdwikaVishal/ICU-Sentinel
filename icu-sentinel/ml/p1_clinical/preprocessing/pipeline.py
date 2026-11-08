@@ -36,6 +36,19 @@ from .validation import (
 logger = logging.getLogger("icu_sentinel.p1_clinical.preprocessing.pipeline")
 
 
+def _infer_source_dataset(filepath: str | Path, patient_id: str) -> str:
+    """Map a raw file to the Set A/Set B partition (never a hospital ID)."""
+    normalized = str(filepath).lower().replace("\\", "/")
+    if "training_seta" in normalized or "set_a" in normalized or "/seta/" in normalized:
+        return "set_a"
+    if "training_setb" in normalized or "set_b" in normalized or "/setb/" in normalized:
+        return "set_b"
+    digits = "".join(ch for ch in str(patient_id) if ch.isdigit())
+    if digits:
+        return "set_a" if int(digits) < 100_000 else "set_b"
+    return "unknown"
+
+
 @dataclass
 class PipelineResult:
     """Result of running the preprocessing pipeline."""
@@ -70,6 +83,8 @@ def run_pipeline(
     save_processed: bool = True,
     save_manifests: bool = True,
     save_reports: bool = True,
+    retain_processed: bool = True,
+    retain_validation_dataframes: bool = True,
 ) -> PipelineResult:
     """Run the full preprocessing pipeline.
 
@@ -83,7 +98,18 @@ def run_pipeline(
       7. Save split manifests and reports.
 
     Returns a PipelineResult with all outputs.
+
+    Set ``retain_processed=False`` for full-dataset runs: per-patient
+    parquet files are still written, but only lightweight split metadata
+    is kept in memory. Set ``retain_validation_dataframes=False`` to
+    release each validated DataFrame after cleaning.
     """
+    if not save_processed and not retain_processed:
+        raise ValueError(
+            "retain_processed=False requires save_processed=True; "
+            "otherwise processed patient data is discarded"
+        )
+
     raw_path = Path(raw_dir)
     processed_path = Path(processed_dir)
     splits_path = Path(splits_dir)
@@ -110,20 +136,17 @@ def run_pipeline(
         if limit is not None and count >= limit:
             break
 
-        # Determine source dataset identity from filename/path.
-        source_dataset = "set_a" if "set_a" in str(ref.filepath).lower() else "set_b"
-        if source_dataset == "set_b" and "set_b" not in str(ref.filepath).lower():
-            # Default heuristic based on patient ID ranges if path doesn't indicate.
-            source_dataset = "set_a"  # conservative default
+        # Determine source dataset identity from filename/path. Set A and
+        # Set B are dataset partitions, never hospital identifiers.
+        source_dataset = _infer_source_dataset(ref.filepath, ref.patient_id)
 
         # Step 2: Load and validate.
+        parse_error: str | None = None
         try:
             df = loader.load_file(ref.filepath)
         except Exception as exc:  # noqa: BLE001
             df = None
             parse_error = str(exc)
-        else:
-            parse_error = None
 
         validation = validate_patient_file(
             df,
@@ -145,10 +168,29 @@ def run_pipeline(
         result.cleaning_reports.append(cleaning_report)
 
         if processed is not None:
-            result.processed_patients.append(processed)
+            if retain_processed:
+                result.processed_patients.append(processed)
+            else:
+                # Keep only the fields needed by the patient-level splitter.
+                result.processed_patients.append(
+                    ProcessedPatient(
+                        patient_id=processed.patient_id,
+                        hospital_id=processed.hospital_id,
+                        hour=[],
+                        clinical={},
+                        sepsis_label=processed.sepsis_label,
+                        source_file=processed.source_file,
+                        source_dataset=processed.source_dataset,
+                        n_rows=processed.n_rows,
+                    )
+                )
             if save_processed:
                 patient_path = processed_path / f"{processed.patient_id}.parquet"
                 processed.to_dataframe().to_parquet(patient_path, index=False)
+
+        if not retain_validation_dataframes:
+            validation.dataframe = None
+            validation.recovered_dataframe = None
 
     # Step 4: Split patients.
     splitter = PatientSplitter(

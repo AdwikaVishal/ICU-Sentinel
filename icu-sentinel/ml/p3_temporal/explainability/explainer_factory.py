@@ -8,13 +8,14 @@ of a placeholder explanation.
 
 from __future__ import annotations
 
+import os
+import sys
 import threading
 from dataclasses import dataclass
 from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
-import shap
 from sklearn.pipeline import Pipeline
 
 from ml.p3_temporal.common.model_bundle import ModelBundle
@@ -55,6 +56,45 @@ _TREE_CLASS_NAMES = {
     "CatBoostClassifier",
     "CatBoostRegressor",
 }
+
+
+_SHAP_MODULE = None
+
+
+def _load_shap():
+    """Import SHAP without letting a broken optional torch install abort it.
+
+    Some SHAP versions probe ``torch`` during import and only catch
+    ``ImportError``. A corrupted CPU torch install raises ``OSError``
+    (WinError 1114, c10.dll) instead. This repo does not use torch, so a
+    broken torch is masked for the import only; SHAP's non-image explainers
+    continue to work.
+    """
+
+    global _SHAP_MODULE
+    if _SHAP_MODULE is not None:
+        return _SHAP_MODULE
+
+    # This project never imports torch. Block SHAP's optional probe before the
+    # import so a broken torch DLL (which can crash the interpreter rather than
+    # raise ImportError) cannot take down the process.
+    if (
+        os.environ.get("ICU_SENTINEL_ENABLE_TORCH") != "1"
+        and "torch" not in sys.modules
+    ):
+        sys.modules["torch"] = None
+
+    try:
+        import shap as shap_module
+    except OSError as exc:
+        message = str(exc).lower()
+        if "torch" not in message and "c10" not in message:
+            raise
+        sys.modules["torch"] = None
+        import shap as shap_module
+
+    _SHAP_MODULE = shap_module
+    return _SHAP_MODULE
 
 
 class ExplainerNotAvailable(Exception):
@@ -324,8 +364,8 @@ class ExplainerFactory:
 
         background_frame = prepare_feature_frame(background, bundle.selected_features)
         background_matrix = transform(preprocessor, background_frame)
-        masker = shap.maskers.Independent(background_matrix, max_samples=len(background_matrix))
-        explainer = shap.LinearExplainer(estimator, masker=masker)
+        masker = _load_shap().maskers.Independent(background_matrix, max_samples=len(background_matrix))
+        explainer = _load_shap().LinearExplainer(estimator, masker=masker)
 
         def _explain(frame: pd.DataFrame) -> np.ndarray:
             matrix = transform(preprocessor, frame)
@@ -358,16 +398,16 @@ class ExplainerFactory:
 
         if external_booster:
             try:
-                explainer = shap.TreeExplainer(estimator, model_output="probability")
+                explainer = _load_shap().TreeExplainer(estimator, model_output="probability")
                 output_space = OUTPUT_SPACE_PROBABILITY
             except Exception:  # noqa: BLE001 - fall back to the library default
-                explainer = shap.TreeExplainer(estimator)
+                explainer = _load_shap().TreeExplainer(estimator)
                 output_space = OUTPUT_SPACE_RAW
         else:
             # scikit-learn tree ensembles expose probability-like leaf
             # values for classifiers, so the default tree output is the
             # probability used by predict_proba.
-            explainer = shap.TreeExplainer(estimator)
+            explainer = _load_shap().TreeExplainer(estimator)
             output_space = (
                 OUTPUT_SPACE_PROBABILITY
                 if hasattr(estimator, "predict_proba")
@@ -413,7 +453,7 @@ class ExplainerFactory:
                     return probabilities[:, 1]
             return np.asarray(model.predict(frame), dtype=float)
 
-        explainer = shap.KernelExplainer(_probability, background_frame)
+        explainer = _load_shap().KernelExplainer(_probability, background_frame)
 
         def _explain(frame: pd.DataFrame) -> np.ndarray:
             values = explainer.shap_values(frame, nsamples=256, silent=True)

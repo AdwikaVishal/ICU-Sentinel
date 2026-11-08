@@ -117,7 +117,10 @@ def train_rf(
         max_depth=config.rf_max_depth,
     )
 
-    X = X_train[selected_features].copy()
+    if list(X_train.columns) == list(selected_features):
+        X = X_train
+    else:
+        X = X_train[selected_features]
     y = y_train.copy()
 
     pipeline = build_rf_pipeline(config, selected_features)
@@ -186,7 +189,7 @@ def predict_rf(
     if result.model is None:
         raise ValueError("Model not trained. Call train_rf() first.")
 
-    X_sel = X[result.selected_features].copy()
+    X_sel = X if list(X.columns) == list(result.selected_features) else X[result.selected_features]
     y_prob = result.model.predict_proba(X_sel)[:, 1]
     y_pred = (y_prob >= threshold).astype(int)
 
