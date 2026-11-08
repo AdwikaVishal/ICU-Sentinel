@@ -414,38 +414,45 @@ def save_split_manifests(
     return saved
 
 
-def load_processed_patients_from_directory(
+def iter_processed_patients_from_directory(
     processed_dir: str | Path,
-) -> list[ProcessedPatient]:
-    """Load ProcessedPatient objects from saved parquet files.
+):
+    """Yield ProcessedPatient objects from saved parquet files one at a time.
 
     Each patient is stored as a separate parquet file named by patient_id.
+    Streaming avoids loading the full dataset into memory.
     """
-
     out = Path(processed_dir)
-    patients: list[ProcessedPatient] = []
     if not out.exists():
-        return patients
+        return
     for path in sorted(out.glob("*.parquet")):
         df = pd.read_parquet(path)
         pid = df["patient_id"].iloc[0]
-        patients.append(
-            ProcessedPatient(
-                patient_id=str(pid),
-                hospital_id=(
-                    str(df["hospital_id"].iloc[0])
-                    if pd.notna(df["hospital_id"].iloc[0])
-                    else None
-                ),
-                hour=df["hour"].tolist(),
-                clinical={v: df[v].tolist() for v in CLINICAL_VARIABLES if v in df.columns},
-                sepsis_label=[int(x) for x in df["SepsisLabel"].tolist()],
-                source_file=str(df["source_file"].iloc[0]),
-                source_dataset=str(df["source_dataset"].iloc[0]),
-                n_rows=len(df),
-            )
+        yield ProcessedPatient(
+            patient_id=str(pid),
+            hospital_id=(
+                str(df["hospital_id"].iloc[0])
+                if pd.notna(df["hospital_id"].iloc[0])
+                else None
+            ),
+            hour=df["hour"].tolist(),
+            clinical={v: df[v].tolist() for v in CLINICAL_VARIABLES if v in df.columns},
+            sepsis_label=[int(x) for x in df["SepsisLabel"].tolist()],
+            source_file=str(df["source_file"].iloc[0]),
+            source_dataset=str(df["source_dataset"].iloc[0]),
+            n_rows=len(df),
         )
-    return patients
+
+
+def load_processed_patients_from_directory(
+    processed_dir: str | Path,
+) -> list[ProcessedPatient]:
+    """Load all ProcessedPatient objects from saved parquet files.
+
+    Prefer ``iter_processed_patients_from_directory`` for full-dataset
+    runs to avoid holding every patient in memory.
+    """
+    return list(iter_processed_patients_from_directory(processed_dir))
 
 
 

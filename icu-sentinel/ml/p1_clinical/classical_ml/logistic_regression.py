@@ -140,8 +140,11 @@ def train_lr(
         selected_features=list(selected_features),
     )
 
-    # Subset to selected features.
-    X = X_train[selected_features].copy()
+    # Subset to selected features without an extra copy when possible.
+    if list(X_train.columns) == list(selected_features):
+        X = X_train
+    else:
+        X = X_train[selected_features]
     y = y_train.copy()
 
     # Build and fit pipeline.
@@ -229,7 +232,7 @@ def predict_lr(
     if result.model is None:
         raise ValueError("Model not trained. Call train_lr() first.")
 
-    X_sel = X[result.selected_features].copy()
+    X_sel = X if list(X.columns) == list(result.selected_features) else X[result.selected_features]
     y_prob = result.model.predict_proba(X_sel)[:, 1]
     y_pred = (y_prob >= threshold).astype(int)
 

@@ -153,7 +153,15 @@ def clean_patient_dataframe(
     # Step 6: Build ProcessedPatient.
     pid = validation.patient_id or patient_id or "unknown"
     hid = hospital_id
-    source_ds = source_dataset or ("set_a" if "set_a" in source_file.lower() else "set_b")
+    source_ds = source_dataset
+    if source_ds is None:
+        lower = str(source_file).lower().replace("\\", "/")
+        if "training_seta" in lower or "set_a" in lower or "/seta/" in lower:
+            source_ds = "set_a"
+        elif "training_setb" in lower or "set_b" in lower or "/setb/" in lower:
+            source_ds = "set_b"
+        else:
+            source_ds = "unknown"
 
     clinical: dict[str, list[float]] = {}
     for var in CLINICAL_VARIABLES:

@@ -21,7 +21,7 @@ No patient data has been downloaded or committed to Git. The `data/` and
 | Criterion | Status | Evidence |
 |---|---|---|
 | Repository initialized | Done | `icu-sentinel/` tree created |
-| Python environment configured | Done | `.venv` created, Python 3.15.0 |
+| Python environment configured | Done | Python 3.11.9 verified 2026-11-06 |
 | Dependencies installed | Done | `pip install -r requirements.txt` succeeded |
 | Folder structure created | Done | All P1/P2/P3 dirs + `__init__.py` files |
 | Pytest configured | Done | `pyproject.toml` `[tool.pytest.ini_options]` |
@@ -87,13 +87,15 @@ packages with `__init__.py` only; no P2/P3 logic has been implemented.
 
 All packages from `requirements.txt` installed successfully into `.venv`:
 
-Key runtime deps: `pandas 3.1.0`, `numpy 2.5.4`, `scikit-learn 1.9.1`,
-`fastapi 0.162.0`, `uvicorn 0.54.0`, `pyarrow 26.0.1`.
+Verified runtime deps (2026-11-06, Python 3.11.9): `pandas 2.3.3`,
+`numpy 1.26.4`, `scikit-learn 1.4.2`, `fastapi 0.162.0`, `uvicorn 0.54.0`,
+`pyarrow 24.0.0`.
 
-Key dev deps: `pytest 9.2.0`, `pytest-cov 7.1.0`, `ruff 0.17.3`, `mypy 2.4.1`,
-`mkdocs 1.6.1`.
+Verified dev deps: `pytest 8.4.2`, `pytest-cov 6.0.0`, `ruff 0.7.4`,
+`mypy 1.13.0`. `mkdocs` is not installed.
 
-Full list captured at install time (47 packages).
+The earlier list in this document reflected an unverified install and has
+been corrected.
 
 ## 5. Files created (PART 1)
 

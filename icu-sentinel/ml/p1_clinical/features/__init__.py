@@ -18,6 +18,7 @@ from .feature_config import (
 from .feature_pipeline import (
     FeaturePipeline,
     FeaturePipelineResult,
+    run_feature_pipeline_streaming,
     run_pipeline_on_processed_patients,
 )
 from .feature_schema import (
@@ -61,5 +62,6 @@ __all__ = [
     "FeaturePipelineResult",
     "FeatureSchema",
     "build_default_schema",
+    "run_feature_pipeline_streaming",
     "run_pipeline_on_processed_patients",
 ]

@@ -71,7 +71,13 @@ class FeatureSchema:
     identifier_columns: list[str] = field(
         default_factory=lambda: ["patient_id", "source_dataset", "hour"]
     )
-    target_columns: list[str] = field(default_factory=lambda: ["SepsisLabel"])
+    target_columns: list[str] = field(
+        default_factory=lambda: [
+            "SepsisLabel",
+            "sepsis_within_6h",
+            "target_eligible",
+        ]
+    )
     optional_identifier_columns: list[str] = field(
         default_factory=lambda: ["hospital_id"]
     )
@@ -127,7 +133,10 @@ class FeatureSchema:
             description=data.get("description", ""),
             features=features,
             identifier_columns=data.get("identifier_columns", ["patient_id", "source_dataset", "hour"]),
-            target_columns=data.get("target_columns", ["SepsisLabel"]),
+            target_columns=data.get(
+                "target_columns",
+                ["SepsisLabel", "sepsis_within_6h", "target_eligible"],
+            ),
             optional_identifier_columns=data.get("optional_identifier_columns", ["hospital_id"]),
         )
 
@@ -184,6 +193,36 @@ def build_default_schema(config=None) -> FeatureSchema:
         tabular_appropriate=False,
         sequential_appropriate=False,
         notes="Target field only; never used as a model input feature",
+    ))
+    schema.add_feature(FeatureEntry(
+        feature_name="sepsis_within_6h",
+        source_variable="SepsisLabel",
+        category=CATEGORY_TARGET,
+        data_type="float",
+        formula=(
+            "1 for onset..onset+5, 0 before onset and for non-septic "
+            "patients, NaN at/after onset+6"
+        ),
+        missing_behavior="nan_when_ineligible",
+        causal=True,
+        tabular_appropriate=False,
+        sequential_appropriate=False,
+        notes=(
+            "Derived strict 6h pre-onset target. onset is the first hour "
+            "with SepsisLabel == 1. Original SepsisLabel is unchanged."
+        ),
+    ))
+    schema.add_feature(FeatureEntry(
+        feature_name="target_eligible",
+        source_variable="SepsisLabel",
+        category=CATEGORY_TARGET,
+        data_type="int",
+        formula="1 if the row has a valid derived target, else 0",
+        missing_behavior="required",
+        causal=True,
+        tabular_appropriate=False,
+        sequential_appropriate=False,
+        notes="Target eligibility metadata; never used as a model input feature",
     ))
 
     # --- Current observation features ---

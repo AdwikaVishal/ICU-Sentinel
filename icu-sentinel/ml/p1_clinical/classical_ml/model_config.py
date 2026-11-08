@@ -40,6 +40,10 @@ SVM_GAMMA: str = "scale"
 SVM_CLASS_WEIGHT: str | None = "balanced"
 SVM_PROBABILITY: bool = True
 SVM_MAX_ITER: int = -1
+# RBF SVC is not tractable on the full hourly matrix (~1.5M rows). Training
+# uses a seeded, class-stratified subsample capped at this many rows. Set to
+# None to disable the cap (not recommended on the full dataset).
+SVM_MAX_TRAIN_ROWS: int | None = 10_000
 
 # Imputation defaults.
 IMPUTE_STRATEGY: str = "median"
@@ -93,6 +97,7 @@ class ModelConfig:
     svm_class_weight: str | None = SVM_CLASS_WEIGHT
     svm_probability: bool = SVM_PROBABILITY
     svm_max_iter: int = SVM_MAX_ITER
+    svm_max_train_rows: int | None = SVM_MAX_TRAIN_ROWS
 
     # Preprocessing.
     impute_strategy: str = IMPUTE_STRATEGY

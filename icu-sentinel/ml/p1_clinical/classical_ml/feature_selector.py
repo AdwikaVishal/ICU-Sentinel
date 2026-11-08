@@ -7,6 +7,7 @@ validation/test without refitting.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
@@ -19,6 +20,31 @@ from ..features.feature_schema import FeatureSchema
 from .data_loader import IDENTIFIER_COLUMNS, TARGET_COLUMN
 
 logger = logging.getLogger("icu_sentinel.p1_clinical.classical_ml.feature_selector")
+
+
+def _column_content_digest(series: pd.Series) -> str:
+    """Return a digest of the complete column contents.
+
+    ``pd.util.hash_pandas_object`` hashes every value (NaN-safe) rather than
+    only the first value. The resulting uint64 array is digested to keep the
+    per-column key small.
+    """
+    hashed = pd.util.hash_pandas_object(series, index=False).to_numpy(
+        dtype=np.uint64
+    )
+    return hashlib.blake2b(hashed.tobytes(), digest_size=16).hexdigest()
+
+
+def _columns_have_identical_values(left: pd.Series, right: pd.Series) -> bool:
+    """Compare complete column contents, treating NaNs in the same place equal.
+
+    ``Series.equals`` requires identical length and dtype and considers NaN
+    values at the same position equal. This acts as a collision check on top
+    of the content digest so a hash collision can never drop a valid column.
+    """
+    if len(left) != len(right):
+        return False
+    return bool(left.equals(right))
 
 
 @dataclass
@@ -107,7 +133,6 @@ class FeatureSelector:
 
         # Cross-reference with schema tabular features if provided.
         if feature_schema is not None:
-            set(feature_schema.tabular_features().__class__ and [])
             schema_feature_names = {
                 f
                 for f in feature_schema.feature_names()
@@ -124,7 +149,9 @@ class FeatureSelector:
             "highly_correlated": [],
         }
 
-        seen_columns: dict[str, str] = {}  # column values hash -> first name
+        # Full-column content digest -> candidate column names. The candidate
+        # list handles the (rare) possibility of a digest collision.
+        seen_columns: dict[str, list[str]] = {}
 
         for col in all_features:
             col_data = X[col]
@@ -153,13 +180,24 @@ class FeatureSelector:
                 removed["constant"].append(col)
                 continue
 
-            # 4. Duplicate check (compare value patterns).
+            # 4. Duplicate check (compare complete column contents).
             if self.remove_duplicate:
-                col_hash = pd.util.hash_pandas_object(col_data).iloc[0]
-                if col_hash in seen_columns:
+                col_hash = _column_content_digest(col_data)
+                candidates = seen_columns.get(col_hash, [])
+                duplicate_of = next(
+                    (
+                        candidate
+                        for candidate in candidates
+                        if _columns_have_identical_values(
+                            col_data, X[candidate]
+                        )
+                    ),
+                    None,
+                )
+                if duplicate_of is not None:
                     removed["duplicate"].append(col)
                     continue
-                seen_columns[col_hash] = col
+                seen_columns.setdefault(col_hash, []).append(col)
 
             kept.append(col)
 
@@ -199,13 +237,17 @@ class FeatureSelector:
         )
         return self
 
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+    def transform(self, X: pd.DataFrame, copy: bool = True) -> pd.DataFrame:
         """Apply fitted feature selection to a DataFrame.
 
         Parameters
         ----------
         X : pd.DataFrame
             Features to transform.
+        copy : bool
+            When True (default) return a new frame. When False, drop unused
+            columns in place and return ``X`` to avoid a full-matrix copy on
+            large datasets.
 
         Returns
         -------
@@ -225,16 +267,22 @@ class FeatureSelector:
                 len(missing),
                 missing[:5],
             )
-        return X[available].copy()
+        if copy:
+            return X[available].copy()
+        drop = [c for c in X.columns if c not in available]
+        if drop:
+            X.drop(columns=drop, inplace=True)
+        return X
 
     def fit_transform(
         self,
         X: pd.DataFrame,
         feature_schema: FeatureSchema | None = None,
+        copy: bool = True,
     ) -> pd.DataFrame:
         """Fit on X and transform X in one call (training data only)."""
         self.fit(X, feature_schema=feature_schema)
-        return self.transform(X)
+        return self.transform(X, copy=copy)
 
     def report(self) -> FeatureSelectionReport:
         """Return a FeatureSelectionReport."""
