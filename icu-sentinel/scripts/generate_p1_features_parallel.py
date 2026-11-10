@@ -138,6 +138,15 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Delete existing per-patient feature parquet files first.",
     )
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help=(
+            "Resume an interrupted run: leave patients whose feature parquet "
+            "already exists untouched and only compute the missing ones. The "
+            "final summary still covers every patient on disk."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -166,7 +175,20 @@ def main() -> int:
         flush=True,
     )
 
-    tasks = [(str(path), str(patients_dir)) for path in processed_paths]
+    if args.skip_existing:
+        pending_paths = [
+            path
+            for path in processed_paths
+            if not (patients_dir / f"{path.stem}.parquet").exists()
+        ]
+        print(
+            f"Resume mode: {len(pending_paths)} of {total} patients still need "
+            f"features ({total - len(pending_paths)} already present)",
+            flush=True,
+        )
+        tasks = [(str(path), str(patients_dir)) for path in pending_paths]
+    else:
+        tasks = [(str(path), str(patients_dir)) for path in processed_paths]
     n_patients = 0
     n_rows = 0
     n_eligible = 0
@@ -182,7 +204,7 @@ def main() -> int:
         max_workers=args.workers,
         initializer=_init_worker,
     ) as executor:
-        for result in executor.map(_process_file, tasks, chunksize=25):
+        for result in executor.map(_process_file, tasks, chunksize=8):
             (
                 _patient_id,
                 rows,
@@ -205,20 +227,46 @@ def main() -> int:
             if examples and len(issue_examples) < 20:
                 issue_examples.extend(examples)
 
-            if n_patients % 500 == 0 or n_patients == total:
+            if n_patients % 100 == 0 or n_patients == len(tasks):
                 elapsed = time.perf_counter() - started
                 rate = n_patients / elapsed if elapsed else 0.0
-                eta = (total - n_patients) / rate if rate else 0.0
+                eta = (len(tasks) - n_patients) / rate if rate else 0.0
                 print(
-                    f"[{n_patients}/{total}] {rate:.1f} patients/s "
+                    f"[{n_patients}/{len(tasks)}] {rate:.2f} patients/s "
                     f"ETA {eta / 60:.1f} min",
                     flush=True,
                 )
 
-    sample_path = next(iter(sorted(patients_dir.glob("*.parquet"))), None)
+    # The run-level counters above only describe patients processed in *this*
+    # invocation. Recompute the on-disk totals so a resumed run reports the
+    # complete cohort, never just the newly added patients.
+    import pyarrow.parquet as pq
+
+    all_feature_paths = sorted(patients_dir.glob("*.parquet"))
+    n_patients = len(all_feature_paths)
+    n_rows = 0
+    n_eligible = 0
+    n_ineligible = 0
+    n_positive = 0
+    n_negative = 0
+    n_missing_target = 0
+    for path in all_feature_paths:
+        target_frame = pd.read_parquet(
+            path, columns=[DERIVED_TARGET_COLUMN, TARGET_ELIGIBLE_COLUMN]
+        )
+        target = target_frame[DERIVED_TARGET_COLUMN]
+        eligible = target_frame[TARGET_ELIGIBLE_COLUMN].astype(bool)
+        n_rows += len(target_frame)
+        n_eligible += int(eligible.sum())
+        n_ineligible += int((~eligible).sum())
+        n_positive += int((target == 1).sum())
+        n_negative += int((target == 0).sum())
+        n_missing_target += int(target.isna().sum())
+
+    sample_path = all_feature_paths[0] if all_feature_paths else None
     feature_cols: list[str] = []
     if sample_path is not None:
-        sample = pd.read_parquet(sample_path)
+        sample = pq.read_schema(sample_path).names
         id_cols = {
             "patient_id",
             "source_dataset",
@@ -227,7 +275,7 @@ def main() -> int:
             DERIVED_TARGET_COLUMN,
             TARGET_ELIGIBLE_COLUMN,
         }
-        feature_cols = [c for c in sample.columns if c not in id_cols]
+        feature_cols = [c for c in sample if c not in id_cols]
 
     policy = TargetPolicy()
     summary = {

@@ -19,9 +19,10 @@ import json
 import sys
 from pathlib import Path
 
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_ICU_SENTINEL_ROOT = _REPO_ROOT / "icu-sentinel"
+if str(_ICU_SENTINEL_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ICU_SENTINEL_ROOT))
 
 from ml.p1_clinical.classical_ml.model_config import ModelConfig
 from ml.p1_clinical.classical_ml.training import run_training_protocol

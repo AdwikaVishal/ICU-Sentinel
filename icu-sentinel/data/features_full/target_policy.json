@@ -1,0 +1,8 @@
+{
+  "horizon_hours": 6,
+  "target_name": "sepsis_within_6h",
+  "eligibility_name": "target_eligible",
+  "description": "Strict 6h pre-onset target: positive for onset..onset+5, negative before onset and for non-septic patients, ineligible at/after onset+6.",
+  "original_label_column": "SepsisLabel",
+  "original_label_modified": false
+}

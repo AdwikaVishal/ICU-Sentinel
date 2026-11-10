@@ -1,0 +1,173 @@
+/Users/shantanu/ICU-Sentinel/train_full_cohort.py:47: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  df[col] = df[col].replace([np.inf, -np.inf], np.nan)
+/Users/shantanu/ICU-Sentinel/train_full_cohort.py:47: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  df[col] = df[col].replace([np.inf, -np.inf], np.nan)
+/Users/shantanu/ICU-Sentinel/train_full_cohort.py:47: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  df[col] = df[col].replace([np.inf, -np.inf], np.nan)
+================================================================================
+ICU SENTINEL: FULL COHORT TRAINING
+================================================================================
+Started: 2026-11-09 23:32:47.251263
+
+Loading complete dataset with all splits...
+Training: 27867 patients, 1,065,260 observations
+Validation: 3981 patients, 151,525 observations
+Test: 7962 patients, 303,709 observations
+Features: 994
+
+Sanitizing data...
+Training positives: 12,131 (1.14%)
+Validation positives: 1,740 (1.15%)
+Test positives: 3,464 (1.14%)
+
+================================================================================
+Training: EXTRA_TREES
+================================================================================
+Building extra_trees pipeline...
+Fitting extra_trees on 1,065,260 observations...
+Training complete in 2583.2s
+Generating predictions...
+Uncalibrated AUROC: train=1.0000, val=0.7340, test=0.7433
+Uncalibrated AUPRC: train=1.0000, val=0.0358, test=0.0325
+Performing calibration analysis...
+Uncalibrated ECE: val=0.0006, test=0.0008
+Selected calibration: isotonic
+Calibrated ECE: val=0.0000, test=0.0003
+Selecting threshold on calibrated validation set...
+Selected threshold: 0.05
+Validation @ threshold: sens=0.148, spec=0.976, prec=0.066
+Evaluating on test set...
+Test AUROC: 0.7433
+Test AUPRC: 0.0325
+Test sensitivity: 0.120
+Test specificity: 0.975
+Test precision: 0.053
+Test F1: 0.074
+Test Brier: 0.0111
+Computing bootstrap confidence intervals (1000 iterations)...
+Bootstrap CIs (95%):
+  auroc: [0.7273, 0.7570]
+  auprc: [0.0290, 0.0365]
+  sensitivity: [0.0993, 0.1386]
+  specificity: [0.9724, 0.9783]
+  precision: [0.0454, 0.0621]
+  f1: [0.0633, 0.0850]
+  brier: [0.0103, 0.0120]
+Saving extra_trees model...
+EXTRA_TREES complete in 2741.9s
+
+================================================================================
+Training: LIGHTGBM
+================================================================================
+Building lightgbm pipeline...
+Fitting lightgbm on 1,065,260 observations...
+Training complete in 569.4s
+Generating predictions...
+Uncalibrated AUROC: train=0.9485, val=0.8051, test=0.8128
+Uncalibrated AUPRC: train=0.2248, val=0.0483, test=0.0504
+Performing calibration analysis...
+Uncalibrated ECE: val=0.2559, test=0.2542
+Selected calibration: isotonic
+Calibrated ECE: val=0.0000, test=0.0001
+Selecting threshold on calibrated validation set...
+Selected threshold: 0.05
+Validation @ threshold: sens=0.263, spec=0.956, prec=0.065
+Evaluating on test set...
+Test AUROC: 0.8128
+Test AUPRC: 0.0504
+Test sensitivity: 0.237
+Test specificity: 0.957
+Test precision: 0.059
+Test F1: 0.095
+Test Brier: 0.0110
+Computing bootstrap confidence intervals (1000 iterations)...
+Bootstrap CIs (95%):
+  auroc: [0.7968, 0.8250]
+  auprc: [0.0405, 0.0530]
+  sensitivity: [0.2070, 0.2680]
+  specificity: [0.9518, 0.9618]
+  precision: [0.0517, 0.0679]
+  f1: [0.0836, 0.1073]
+  brier: [0.0102, 0.0119]
+Saving lightgbm model...
+LIGHTGBM complete in 634.8s
+
+================================================================================
+Training: XGBOOST
+================================================================================
+Building xgboost pipeline...
+Fitting xgboost on 1,065,260 observations...
+Training complete in 61.6s
+Generating predictions...
+Uncalibrated AUROC: train=0.8865, val=0.7986, test=0.8138
+Uncalibrated AUPRC: train=0.1272, val=0.0471, test=0.0520
+Performing calibration analysis...
+Uncalibrated ECE: val=0.3187, test=0.3173
+Selected calibration: isotonic
+Calibrated ECE: val=0.0000, test=0.0002
+Selecting threshold on calibrated validation set...
+Selected threshold: 0.05
+Validation @ threshold: sens=0.236, spec=0.962, prec=0.068
+Evaluating on test set...
+Test AUROC: 0.8138
+Test AUPRC: 0.0520
+Test sensitivity: 0.214
+Test specificity: 0.962
+Test precision: 0.062
+Test F1: 0.096
+Test Brier: 0.0110
+Computing bootstrap confidence intervals (1000 iterations)...
+Bootstrap CIs (95%):
+  auroc: [0.7986, 0.8255]
+  auprc: [0.0400, 0.0554]
+  sensitivity: [0.1839, 0.2414]
+  specificity: [0.9579, 0.9672]
+  precision: [0.0532, 0.0711]
+  f1: [0.0829, 0.1086]
+  brier: [0.0102, 0.0119]
+Saving xgboost model...
+XGBOOST complete in 128.5s
+
+Saving comprehensive results...
+
+================================================================================
+MODEL COMPARISON (Test Set, Calibrated)
+================================================================================
+Model           AUROC      AUPRC      Sens       Spec       Prec       F1         ECE       
+--------------------------------------------------------------------------------
+extra_trees     0.7433     0.0325     0.120      0.975      0.053      0.074      0.0003    
+lightgbm        0.8128     0.0504     0.237      0.957      0.059      0.095      0.0001    
+xgboost         0.8138     0.0520     0.214      0.962      0.062      0.096      0.0002    
+================================================================================
+
+All artifacts saved to: /Users/shantanu/ICU-Sentinel/artifacts/physionet2019/full_cohort_v2
+Completed: 2026-11-10 00:47:15.327686
+
+SUCCESS: Full cohort training complete!

@@ -1,0 +1,32 @@
+# Exclude joblib model artifacts
+artifacts/
+
+# Exclude Python virtual environment
+.venv/
+
+# Exclude package lock files
+*.pkl
+*.joblib
+*.pickle
+
+# Exclude tar.gz backup files
+*.tar.gz
+# Large research artifacts - keep locally, not in Git
+/artifacts/
+ /icu-sentinel/data/
+*.joblib
+*.parquet
+*.psv
+*.tar.gz
+/icu-sentinel/awscliv2.zip
+
+# Python environments and caches
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Frontend dependencies and builds
+node_modules/
+dist/

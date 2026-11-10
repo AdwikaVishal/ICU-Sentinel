@@ -1,0 +1,19 @@
+{
+  "validation": {
+    "n_files": 39810,
+    "n_passed": 39810,
+    "n_failed": 0,
+    "n_errors": 0,
+    "n_warnings": 79620,
+    "pass_rate": 1.0,
+    "failed_files": []
+  },
+  "failed_patients": [],
+  "cleaning": {
+    "n_patients_cleaned": 39810,
+    "n_rows_dropped_total": 0,
+    "n_missing_preserved_total": 42911347
+  },
+  "labels_preserved": true,
+  "sepsis_label_shift_applied": false
+}

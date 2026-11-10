@@ -21,9 +21,10 @@ import argparse
 import sys
 from pathlib import Path
 
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_ICU_SENTINEL_ROOT = _REPO_ROOT / "icu-sentinel"
+if str(_ICU_SENTINEL_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ICU_SENTINEL_ROOT))
 
 from ml.p2_boosting.config import P2Config, safe_thread_default
 from ml.p2_boosting.training import train_p2_from_artifacts
@@ -34,17 +35,17 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--processed-dir",
         type=Path,
-        default=_REPO_ROOT / "data" / "features" / "patients",
+        default=_ICU_SENTINEL_ROOT / "data" / "features" / "patients",
     )
     parser.add_argument(
         "--split-manifest",
         type=Path,
-        default=_REPO_ROOT / "data" / "splits" / "split_manifest.json",
+        default=_ICU_SENTINEL_ROOT / "data" / "splits" / "split_manifest.json",
     )
     parser.add_argument(
         "--feature-schema",
         type=Path,
-        default=_REPO_ROOT / "data" / "features" / "feature_schema.json",
+        default=_ICU_SENTINEL_ROOT / "data" / "features" / "feature_schema.json",
     )
     parser.add_argument(
         "--artifact-dir", type=Path, default=_REPO_ROOT / "artifacts" / "p2"
@@ -52,7 +53,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--reports-dir",
         type=Path,
-        default=_REPO_ROOT / "data" / "reports" / "p2",
+        default=_ICU_SENTINEL_ROOT / "data" / "reports" / "p2",
     )
     parser.add_argument(
         "--disable-lightgbm",

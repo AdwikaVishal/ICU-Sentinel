@@ -1,0 +1,80 @@
+Loading split-aware dataset (all splits) ...
+Features: 994 (dropped 0 all-missing-in-train)
+Rows: train=1065260 val=151525 test=303709; patients: 27867/3981/7962
+Traceback (most recent call last):
+  File "/Users/shantanu/ICU-Sentinel/icu-sentinel/scripts/run_full_experiment.py", line 798, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/Users/shantanu/ICU-Sentinel/icu-sentinel/scripts/run_full_experiment.py", line 443, in main
+    pipeline.fit(X_train, y_train)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/base.py", line 1403, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/pipeline.py", line 632, in fit
+    Xt = self._fit(
+        X, y, routed_params, raw_params=params, callback_ctx=callback_ctx
+    )
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/pipeline.py", line 561, in _fit
+    X, fitted_transformer = fit_transform_one_cached(
+                            ~~~~~~~~~~~~~~~~~~~~~~~~^
+        cloned_transformer,
+        ^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        callback_ctx=subcontext,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/joblib/memory.py", line 331, in __call__
+    return self.func(*args, **kwargs)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/pipeline.py", line 1593, in _fit_transform_one_with_callbacks
+    Xt, transformer = _fit_transform_one(
+                      ~~~~~~~~~~~~~~~~~~^
+        transformer, X, y, weight, message_clsname, message, params
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/pipeline.py", line 1566, in _fit_transform_one
+    res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/utils/_set_output.py", line 327, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/base.py", line 972, in fit_transform
+    return self.fit(X, y, **fit_params).transform(X)
+           ~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/base.py", line 1403, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/impute/_base.py", line 448, in fit
+    X = self._validate_input(X, in_fit=True)
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/impute/_base.py", line 375, in _validate_input
+    raise ve
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/impute/_base.py", line 356, in _validate_input
+    X = validate_data(
+        self,
+    ...<6 lines>...
+        copy=self.copy,
+    )
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/utils/validation.py", line 3041, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/utils/validation.py", line 1090, in check_array
+    _assert_all_finite(
+    ~~~~~~~~~~~~~~~~~~^
+        array,
+        ^^^^^^
+    ...<2 lines>...
+        allow_nan=ensure_all_finite == "allow-nan",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/utils/validation.py", line 137, in _assert_all_finite
+    _assert_all_finite_element_wise(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        X,
+        ^^
+    ...<4 lines>...
+        input_name=input_name,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/sklearn/utils/validation.py", line 186, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains infinity or a value too large for dtype('float32').

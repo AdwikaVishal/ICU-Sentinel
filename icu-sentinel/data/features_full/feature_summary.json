@@ -1,0 +1,176 @@
+{
+  "n_patients": 39810,
+  "n_rows": 1530732,
+  "n_features": 994,
+  "feature_categories": {
+    "current": 39,
+    "missingness": 102,
+    "forward_fill": 34,
+    "rolling": 510,
+    "trend": 306,
+    "clinical": 3,
+    "other": 0
+  },
+  "causal": true,
+  "no_imputation": true,
+  "no_future_leakage": true,
+  "parallel_workers": 8,
+  "target_policy": {
+    "horizon_hours": 6,
+    "target_name": "sepsis_within_6h",
+    "eligibility_name": "target_eligible",
+    "description": "Strict 6h pre-onset target: positive for onset..onset+5, negative before onset and for non-septic patients, ineligible at/after onset+6.",
+    "original_label_column": "SepsisLabel",
+    "original_label_modified": false
+  },
+  "target_summary": {
+    "target_name": "sepsis_within_6h",
+    "available": true,
+    "horizon_hours": 6,
+    "policy": {
+      "horizon_hours": 6,
+      "target_name": "sepsis_within_6h",
+      "eligibility_name": "target_eligible",
+      "description": "Strict 6h pre-onset target: positive for onset..onset+5, negative before onset and for non-septic patients, ineligible at/after onset+6.",
+      "original_label_column": "SepsisLabel",
+      "original_label_modified": false
+    },
+    "n_rows": 1530732,
+    "n_eligible": 1520494,
+    "n_ineligible": 10238,
+    "n_positive": 17335,
+    "n_negative": 1503159,
+    "n_missing_target": 10238,
+    "positive_rate_eligible": 0.011400899970667427,
+    "original_label_modified": false
+  },
+  "validation_report": {
+    "n_issues": 0,
+    "issues": [],
+    "causal_check_passed": true
+  },
+  "config": {
+    "rolling_window_hours": [
+      6,
+      12,
+      24
+    ],
+    "rolling_aggregations": [
+      "mean",
+      "min",
+      "max",
+      "std",
+      "latest"
+    ],
+    "rolling_min_observations": 1,
+    "trend_window_hours": [
+      6,
+      12,
+      24
+    ],
+    "trend_min_observations": 2,
+    "forward_fill_max_window_hours": {
+      "default": 4,
+      "vital_signs": 4,
+      "laboratory": 6
+    },
+    "feature_variables": [
+      "HR",
+      "O2Sat",
+      "Temp",
+      "SBP",
+      "MAP",
+      "DBP",
+      "Resp",
+      "EtCO2",
+      "BaseExcess",
+      "HCO3",
+      "FiO2",
+      "pH",
+      "PaCO2",
+      "SaO2",
+      "AST",
+      "BUN",
+      "Alkalinephos",
+      "Calcium",
+      "Chloride",
+      "Creatinine",
+      "Bilirubin_direct",
+      "Glucose",
+      "Lactate",
+      "Magnesium",
+      "Phosphate",
+      "Potassium",
+      "Bilirubin_total",
+      "TroponinI",
+      "Hct",
+      "Hgb",
+      "PTT",
+      "WBC",
+      "Fibrinogen",
+      "Platelets"
+    ],
+    "static_variables": [
+      "Age",
+      "Gender",
+      "Unit1",
+      "Unit2",
+      "HospAdmTime"
+    ],
+    "vital_sign_variables": [
+      "HR",
+      "O2Sat",
+      "Temp",
+      "SBP",
+      "MAP",
+      "DBP",
+      "Resp",
+      "EtCO2"
+    ],
+    "laboratory_variables": [
+      "BaseExcess",
+      "HCO3",
+      "FiO2",
+      "pH",
+      "PaCO2",
+      "SaO2",
+      "AST",
+      "BUN",
+      "Alkalinephos",
+      "Calcium",
+      "Chloride",
+      "Creatinine",
+      "Bilirubin_direct",
+      "Glucose",
+      "Lactate",
+      "Magnesium",
+      "Phosphate",
+      "Potassium",
+      "Bilirubin_total",
+      "TroponinI",
+      "Hct",
+      "Hgb",
+      "PTT",
+      "WBC",
+      "Fibrinogen",
+      "Platelets"
+    ],
+    "target_columns": [
+      "SepsisLabel"
+    ],
+    "identifier_columns": [
+      "patient_id",
+      "hospital_id",
+      "hour",
+      "source_file",
+      "source_dataset"
+    ],
+    "compute_missingness_features": true,
+    "compute_forward_fill": true,
+    "compute_rolling_features": true,
+    "compute_trend_features": true,
+    "compute_clinical_features": true,
+    "shocks_index_enabled": true,
+    "sirs_count_enabled": true
+  }
+}

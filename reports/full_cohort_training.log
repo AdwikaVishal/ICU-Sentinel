@@ -1,0 +1,51 @@
+Failed to load /Users/shantanu/ICU-Sentinel/icu-sentinel/data/features_full/patients/p010963.parquet: Could not open Parquet input source '/Users/shantanu/ICU-Sentinel/icu-sentinel/data/features_full/patients/p010963.parquet': Parquet magic bytes not found in footer. Either the file is corrupted or this is not a parquet file.
+================================================================================
+ICU SENTINEL: FULL COHORT TRAINING
+================================================================================
+Started: 2026-11-09 18:59:57.220882
+
+Loading complete dataset with all splits...
+Training: 27866 patients, 1,065,217 observations
+Validation: 3981 patients, 151,525 observations
+Test: 7962 patients, 303,709 observations
+Features: 994
+
+Sanitizing data...
+Training positives: 12,131 (1.14%)
+Validation positives: 1,740 (1.15%)
+Test positives: 3,464 (1.14%)
+
+================================================================================
+Training: EXTRA_TREES
+================================================================================
+Building extra_trees pipeline...
+Fitting extra_trees on 1,065,217 observations...
+Training complete in 1144.2s
+Generating predictions...
+Uncalibrated AUROC: train=1.0000, val=0.7386, test=0.7418
+Uncalibrated AUPRC: train=1.0000, val=0.0366, test=0.0311
+Performing calibration analysis...
+Uncalibrated ECE: val=0.0006, test=0.0010
+Selected calibration: isotonic
+Calibrated ECE: val=0.0000, test=0.0003
+Selecting threshold on calibrated validation set...
+Selected threshold: 0.05
+Validation @ threshold: sens=0.121, spec=0.981, prec=0.070
+Evaluating on test set...
+Test AUROC: 0.7418
+Test AUPRC: 0.0311
+Test sensitivity: 0.088
+Test specificity: 0.981
+Test precision: 0.050
+Test F1: 0.064
+Test Brier: 0.0112
+Computing bootstrap confidence intervals (1000 iterations)...
+Bootstrap CIs (95%):
+Traceback (most recent call last):
+  File "/Users/shantanu/ICU-Sentinel/train_full_cohort.py", line 446, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/Users/shantanu/ICU-Sentinel/train_full_cohort.py", line 330, in main
+    for metric, ci in boot_result.confidence_intervals.items():
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'BootstrapSummary' object has no attribute 'confidence_intervals'

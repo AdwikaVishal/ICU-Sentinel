@@ -1,0 +1,14 @@
+{
+  "leakage_detected": false,
+  "n_overlapping_patients": 0,
+  "overlaps": {},
+  "patients_in_multiple_splits": {},
+  "every_patient_in_exactly_one_split": true,
+  "split_sepsis_rates": {
+    "train": 0.0727,
+    "validation": 0.0728,
+    "test": 0.0727
+  },
+  "n_patients_total": 39810,
+  "n_patients_assigned": 39810
+}

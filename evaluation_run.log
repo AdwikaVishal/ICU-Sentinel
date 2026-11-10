@@ -1,0 +1,122 @@
+================================================================================
+ICU SENTINEL: COMPREHENSIVE FINAL EVALUATION
+================================================================================
+Started: 2026-11-10 00:45:15.816393
+
+PHASE 1: DATASET VERIFICATION
+--------------------------------------------------------------------------------
+Total patients: 39810
+Training patients: 27867
+Validation patients: 3981
+Test patients: 7962
+Training observations: 1,072,418
+Validation observations: 152,554
+Test observations: 305,760
+
+Loading dataset...
+Test set loaded: 7962 patients, 303,709 observations
+Features: 994
+
+Test positives: 3,464 (1.14%)
+
+PHASE 2: MODEL LOADING AND VERIFICATION
+--------------------------------------------------------------------------------
+Loading extra_trees...
+  Training patients: 27867
+  Training observations: 1,065,260
+  Features: 994
+  Validation AUROC: 0.7340
+
+Loading lightgbm...
+  Training patients: 27867
+  Training observations: 1,065,260
+  Features: 994
+  Validation AUROC: 0.8051
+
+Loading xgboost...
+  Training patients: 27867
+  Training observations: 1,065,260
+  Features: 994
+  Validation AUROC: 0.7986
+
+PHASE 3: TEST SET EVALUATION
+--------------------------------------------------------------------------------
+Evaluating extra_trees on test set...
+  AUROC: 0.7433
+  AUPRC: 0.0325
+  Brier: 0.0113
+  ECE: 0.0008
+  Sens/Spec: 0.149/0.967 @ threshold 0.05
+
+Evaluating lightgbm on test set...
+  AUROC: 0.8128
+  AUPRC: 0.0504
+  Brier: 0.1163
+  ECE: 0.2542
+  Sens/Spec: 0.210/0.963 @ threshold 0.73
+
+Evaluating xgboost on test set...
+  AUROC: 0.8138
+  AUPRC: 0.0520
+  Brier: 0.1449
+  ECE: 0.3173
+  Sens/Spec: 0.163/0.975 @ threshold 0.78
+
+Test evaluation saved to: /Users/shantanu/ICU-Sentinel/artifacts/physionet2019/final_evaluation/test_evaluation.json
+
+PHASE 4: PATIENT-LEVEL BOOTSTRAP CONFIDENCE INTERVALS
+--------------------------------------------------------------------------------
+Computing 1000-iteration patient-level bootstrap...
+This may take 10-30 minutes...
+
+Bootstrapping extra_trees...
+  ERROR: compute_bootstrap_confidence_intervals() got an unexpected keyword argument 'y_true'
+Bootstrapping lightgbm...
+  ERROR: compute_bootstrap_confidence_intervals() got an unexpected keyword argument 'y_true'
+Bootstrapping xgboost...
+  ERROR: compute_bootstrap_confidence_intervals() got an unexpected keyword argument 'y_true'
+Bootstrap results saved to: /Users/shantanu/ICU-Sentinel/artifacts/physionet2019/final_evaluation/bootstrap_confidence_intervals.json
+
+PHASE 5: CLINICAL BASELINE EVALUATION
+--------------------------------------------------------------------------------
+Calculating SIRS scores...
+  SIRS: AUROC 0.5628074698013714, computable: 263395/303709
+
+Calculating partial qSOFA scores...
+  qSOFA (PARTIAL): AUROC 0.5141682154411148, computable: 244151/303709
+
+Calculating partial NEWS2 scores...
+Traceback (most recent call last):
+  File "/Users/shantanu/ICU-Sentinel/complete_final_evaluation.py", line 628, in <module>
+    main()
+    ~~~~^^
+  File "/Users/shantanu/ICU-Sentinel/complete_final_evaluation.py", line 580, in main
+    news2 = calculate_news2_score(test.X)
+  File "/Users/shantanu/ICU-Sentinel/complete_final_evaluation.py", line 203, in calculate_news2_score
+    results.loc[rr.notna(), 'news2_score'] += np.select(
+    ...<3 lines>...
+    )
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/pandas/core/generic.py", line 12761, in __iadd__
+    return self._inplace_method(other, type(self).__add__)  # type: ignore[operator]
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/pandas/core/generic.py", line 12751, in _inplace_method
+    result = op(self, other)
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/pandas/core/ops/common.py", line 140, in new_method
+    return method(self, other)
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/pandas/core/arraylike.py", line 211, in __add__
+    return self._arith_method(other, operator.add)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/pandas/core/series.py", line 7388, in _arith_method
+    return base.IndexOpsMixin._arith_method(self, other, op)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/pandas/core/base.py", line 1717, in _arith_method
+    result = ops.arithmetic_op(lvalues, rvalues, op)
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/pandas/core/ops/array_ops.py", line 292, in arithmetic_op
+    res_values = _na_arithmetic_op(left, right, op)  # type: ignore[arg-type]
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/pandas/core/ops/array_ops.py", line 223, in _na_arithmetic_op
+    result = func(left, right)
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/pandas/core/computation/expressions.py", line 286, in evaluate
+    return _evaluate(op, op_str, left_op, right_op)  # type: ignore[misc]
+  File "/Users/shantanu/ICU-Sentinel/.venv/lib/python3.14/site-packages/pandas/core/computation/expressions.py", line 85, in _evaluate_standard
+    return op(left_op, right_op)
+ValueError: operands could not be broadcast together with shapes (258130,) (303709,) 

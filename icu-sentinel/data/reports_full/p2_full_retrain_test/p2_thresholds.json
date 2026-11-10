@@ -1,0 +1,12 @@
+{
+  "thresholds": {
+    "extra_trees": 0.06,
+    "lightgbm": 0.46,
+    "xgboost": 0.68
+  },
+  "selection_split": "validation",
+  "selection_metric": "f1",
+  "grid_step": 0.01,
+  "test_set_used_for_selection": false,
+  "source": "real"
+}

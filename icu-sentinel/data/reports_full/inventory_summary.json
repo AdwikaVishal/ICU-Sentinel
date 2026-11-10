@@ -1,0 +1,42 @@
+{
+  "inventory_timestamp": "2026-11-09T10:02:21.347097+00:00",
+  "total_expected": 40336,
+  "total_raw_files": 39810,
+  "funnel": {
+    "Expected (PhysioNet)": 40336,
+    "Downloaded (raw files)": 39810,
+    "Raw files exist": 39810,
+    "Processed files exist": 39810,
+    "Feature files exist": 39810,
+    "ELIGIBLE FOR TRAINING": 39810
+  },
+  "exclusion_breakdown": {},
+  "by_source_dataset": {
+    "training_setA": {
+      "total": 20336,
+      "eligible": 20336
+    },
+    "training_setB": {
+      "total": 19474,
+      "eligible": 19474
+    }
+  },
+  "by_split": {
+    "train": {
+      "total": 12979,
+      "eligible": 12979
+    },
+    "validation": {
+      "total": 1855,
+      "eligible": 1855
+    },
+    "test": {
+      "total": 3709,
+      "eligible": 3709
+    },
+    "unknown": {
+      "total": 21267,
+      "eligible": 21267
+    }
+  }
+}
