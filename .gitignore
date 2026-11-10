@@ -30,3 +30,16 @@ __pycache__/
 # Frontend dependencies and builds
 node_modules/
 dist/
+
+# Runtime logs and process artifacts (keep locally, not in Git)
+*.err
+*.out
+*_pid.txt
+p2_execution.log
+
+# Backup files from editing
+*.bak
+*.bak2
+
+# SQLite alert database and sidecar files (runtime artifact)
+/icu-sentinel/data/p3_alerts.db*
