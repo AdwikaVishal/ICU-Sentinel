@@ -205,7 +205,18 @@ class ModelPredictionProvider(BasePredictionProvider):
         if array.ndim != 2 or array.shape[1] < 2:
             return self._unavailable(context, "Model did not return binary probabilities.")
         probability = float(array[0, 1])
-        if not math.isfinite(probability):
+        # Apply calibrated sigmoid if a calibrator is available in bundle metadata
+        calibrator = self.bundle.metadata.get("calibrator") if hasattr(self.bundle, "metadata") else None
+        if calibrator is not None:
+            try:
+                from ml.p2_boosting.calibration import apply_probability_calibrator
+                # Apply calibrator to the raw probability array, then take first element
+                calibrated = apply_probability_calibrator(calibrator, array[:, 1])
+                probability = float(calibrated[0])
+            except Exception:
+                # If calibration fails, fall through with uncalibrated probability
+                pass
+        if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
             return self._unavailable(context, "Model returned a non-finite probability.")
         return self._available_result(context, probability)
 

@@ -10,7 +10,7 @@ if str(_ML_ROOT) not in sys.path:
 from ml.p1_clinical.preprocessing.patient_splits import VALID_SPLITS
 from ml.p1_clinical.classical_ml.data_loader import SplitManifest
 
-MANIFEST = _ML_ROOT / "data" / "splits" / "split_manifest_fast_6000.json"
+MANIFEST = _ML_ROOT / "data" / "splits" / "split_manifest_fast.json"
 
 print("=" * 70)
 print("SPLIT VALIDATION DIAGNOSTIC")
