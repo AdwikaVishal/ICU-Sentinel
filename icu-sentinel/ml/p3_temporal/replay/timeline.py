@@ -126,6 +126,9 @@ class TimelineService:
         available = 0
         unavailable = 0
         for variable in CLINICAL_VARIABLES:
+            if variable == "ICULOS":
+                # ICULOS is time-in-ICU metadata, not a clinical observation.
+                continue
             values = index.patient.clinical.get(variable, [])
             value = values[row] if row < len(values) else None
             if _finite(value):
@@ -161,6 +164,9 @@ class TimelineService:
             return []
         observations: list[ObservationValue] = []
         for variable in CLINICAL_VARIABLES:
+            if variable == "ICULOS":
+                # ICULOS is time-in-ICU metadata, not a clinical observation.
+                continue
             values = index.patient.clinical.get(variable, [])
             value = values[row] if row < len(values) else None
             available = _finite(value)

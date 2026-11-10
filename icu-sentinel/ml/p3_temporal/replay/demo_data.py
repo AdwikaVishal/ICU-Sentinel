@@ -474,6 +474,9 @@ def summarize_patient(patient: ProcessedPatient, *, is_synthetic: bool) -> Patie
     recorded = len(set(hours))
     observation_count = 0
     for variable in CLINICAL_VARIABLES:
+        if variable == "ICULOS":
+            # ICULOS is time-in-ICU metadata, not a clinical observation.
+            continue
         values = patient.clinical.get(variable, [])
         observation_count += sum(
             1 for value in values if value is not None and _finite(value)
