@@ -432,14 +432,22 @@ def iter_processed_patients_from_directory(
             patient_id=str(pid),
             hospital_id=(
                 str(df["hospital_id"].iloc[0])
-                if pd.notna(df["hospital_id"].iloc[0])
+                if "hospital_id" in df.columns and pd.notna(df["hospital_id"].iloc[0])
                 else None
             ),
             hour=df["hour"].tolist(),
             clinical={v: df[v].tolist() for v in CLINICAL_VARIABLES if v in df.columns},
             sepsis_label=[int(x) for x in df["SepsisLabel"].tolist()],
-            source_file=str(df["source_file"].iloc[0]),
-            source_dataset=str(df["source_dataset"].iloc[0]),
+            source_file=(
+                str(df["source_file"].iloc[0])
+                if "source_file" in df.columns and pd.notna(df["source_file"].iloc[0])
+                else None
+            ),
+            source_dataset=(
+                str(df["source_dataset"].iloc[0])
+                if "source_dataset" in df.columns and pd.notna(df["source_dataset"].iloc[0])
+                else None
+            ),
             n_rows=len(df),
         )
 

@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Protocol
 
 import numpy as np
+import pandas as pd
 
 from ml.p1_clinical.features.feature_config import (
     LABORATORY_VARIABLES,
@@ -181,31 +182,172 @@ class SyntheticDemoPatientRepository:
 
 
 class DirectoryPatientRepository:
-    """Repository backed by P1-processed per-patient parquet files."""
+    """Repository backed by P1-processed per-patient parquet files.
+
+    Patient listing is powered by the P1 split manifest (a single JSON read)
+    so startup stays fast even with tens of thousands of patients. Full
+    :class:`ProcessedPatient` objects are loaded lazily from parquet on first
+    access and cached in memory.
+    """
 
     data_source = "processed_parquet"
     is_synthetic = False
 
     def __init__(self, directory: str | Path) -> None:
         self.directory = Path(directory)
-        patients = load_processed_patients_from_directory(self.directory)
-        if not patients:
-            raise ValueError(f"No processed patient parquet files found in {self.directory}")
-        self._patients = {patient.patient_id: patient for patient in patients}
+        if not self.directory.exists():
+            raise ValueError(
+                f"Processed patient directory not found: {self.directory}"
+            )
+        # Load split manifest for lightweight patient index.
+        manifest_path = self.directory.parent / "splits" / "split_manifest.json"
+        self._index: dict[str, dict] = {}
+        if manifest_path.exists():
+            import json
 
+            with open(manifest_path) as f:
+                manifest = json.load(f)
+            for entry in manifest.get("patients", []):
+                pid = entry["patient_id"]
+                self._index[pid] = {
+                    "patient_id": pid,
+                    "split": entry.get("split"),
+                    "n_records": entry.get("n_records", 0),
+                    "has_sepsis": entry.get("has_sepsis", False),
+                    "source_file": entry.get("source_file"),
+                    "source_dataset": entry.get("source_dataset"),
+                    "hour_min": None,
+                    "hour_max": None,
+                    "n_sepsis_positive_hours": entry.get("n_sepsis_positive_hours", 0),
+                    "n_sepsis_negative_hours": entry.get("n_sepsis_negative_hours", 0),
+                }
+        else:
+            # Fall back to scanning parquet filenames.
+            for path in sorted(self.directory.glob("*.parquet")):
+                pid = path.stem
+                self._index[pid] = {
+                    "patient_id": pid,
+                    "split": None,
+                    "n_records": 0,
+                    "has_sepsis": False,
+                    "source_file": path.name,
+                    "source_dataset": None,
+                    "hour_min": None,
+                    "hour_max": None,
+                    "n_sepsis_positive_hours": 0,
+                    "n_sepsis_negative_hours": 0,
+                }
+        if not self._index:
+            raise ValueError(
+                f"No processable patient parquet files found in {self.directory}"
+            )
+        # Lazy cache: patient_id -> ProcessedPatient (populated on demand).
+        self._patients: dict[str, ProcessedPatient] = {}
+        self._hour_ranges: dict[str, tuple[int, int]] = {}
+
+    # ------------------------------------------------------------------
+    # Index helpers
+    # ------------------------------------------------------------------
+    def _patient_ids(self) -> list[str]:
+        return sorted(self._index.keys())
+
+    def _get_hour_range(self, patient_id: str) -> tuple[int, int]:
+        """Return (min_hour, max_hour) for a patient, reading parquet if needed."""
+        if patient_id in self._hour_ranges:
+            return self._hour_ranges[patient_id]
+        path = self.directory / f"{patient_id}.parquet"
+        if not path.exists():
+            self._hour_ranges[patient_id] = (0, 0)
+            return (0, 0)
+        import pyarrow.parquet as pq
+
+        pf = pq.ParquetFile(path)
+        names = set(pf.schema.names)
+        if "hour" not in names:
+            self._hour_ranges[patient_id] = (0, 0)
+            return (0, 0)
+        df = pf.read(columns=["hour"]).to_pandas()
+        hours = [int(h) for h in df["hour"].tolist() if h >= 0]
+        hr = (min(hours), max(hours)) if hours else (0, 0)
+        self._hour_ranges[patient_id] = hr
+        # Also cache n_rows in the index.
+        self._index[patient_id]["hour_min"] = hr[0]
+        self._index[patient_id]["hour_max"] = hr[1]
+        self._index[patient_id]["n_records"] = len(df)
+        return hr
+
+    def _load_full_patient(self, patient_id: str) -> ProcessedPatient:
+        """Load and cache a full ProcessedPatient from its parquet file."""
+        if patient_id in self._patients:
+            return self._patients[patient_id]
+        entry = self._index.get(patient_id)
+        if entry is None:
+            raise PatientNotFoundError(f"Patient not found: {patient_id}")
+        path = self.directory / f"{patient_id}.parquet"
+        if not path.exists():
+            raise PatientNotFoundError(f"Patient not found: {patient_id}")
+        df = pd.read_parquet(path)
+        clinical = {}
+        for var in CLINICAL_VARIABLES:
+            if var in df.columns:
+                clinical[var] = [
+                    float(x) if x is not None else float("nan")
+                    for x in df[var].tolist()
+                ]
+            else:
+                clinical[var] = [float("nan")] * len(df)
+        hours = [int(h) for h in df["hour"].tolist()]
+        sepsis_labels = [int(x) for x in df["SepsisLabel"].tolist()] if "SepsisLabel" in df.columns else [0] * len(df)
+        patient = ProcessedPatient(
+            patient_id=str(df["patient_id"].iloc[0]),
+            hospital_id=None,
+            hour=hours,
+            clinical=clinical,
+            sepsis_label=sepsis_labels,
+            source_file=str(df["source_file"].iloc[0]) if "source_file" in df.columns else entry.get("source_file"),
+            source_dataset=str(df["source_dataset"].iloc[0]) if "source_dataset" in df.columns else entry.get("source_dataset"),
+            n_rows=len(df),
+        )
+        self._patients[patient_id] = patient
+        return patient
+
+    # ------------------------------------------------------------------
+    # PatientRepository protocol
+    # ------------------------------------------------------------------
     def list_patients(self) -> list[PatientSummary]:
-        return [
-            summarize_patient(patient, is_synthetic=False)
-            for _, patient in sorted(self._patients.items())
-        ]
+        summaries: list[PatientSummary] = []
+        for pid in self._patient_ids():
+            entry = self._index[pid]
+            n_records = entry["n_records"]
+            hour_min = entry.get("hour_min")
+            hour_max = entry.get("hour_max")
+            if hour_min is None or hour_max is None:
+                total_hours = 0
+                recorded_hours = 0
+            else:
+                total_hours = hour_max - hour_min + 1
+                recorded_hours = n_records
+            summaries.append(
+                PatientSummary(
+                    patient_id=pid,
+                    n_hours=n_records,
+                    total_hours=total_hours,
+                    recorded_hours=recorded_hours,
+                    missing_hours=max(0, total_hours - recorded_hours),
+                    observation_count=0,  # counted lazily per patient on demand
+                    data_source="processed_parquet",
+                    source_dataset=entry["source_dataset"],
+                    is_synthetic=False,
+                    has_retrospective_label=entry["has_sepsis"],
+                )
+            )
+        return summaries
 
     def get_patient(self, patient_id: str) -> ProcessedPatient:
-        if patient_id not in self._patients:
-            raise PatientNotFoundError(f"Patient not found: {patient_id}")
-        return self._patients[patient_id]
+        return self._load_full_patient(patient_id)
 
     def patient_exists(self, patient_id: str) -> bool:
-        return patient_id in self._patients
+        return patient_id in self._index
 
     def training_patients(self) -> list[ProcessedPatient]:
         return []

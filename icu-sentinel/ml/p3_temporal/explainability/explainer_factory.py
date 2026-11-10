@@ -398,16 +398,18 @@ class ExplainerFactory:
 
         if external_booster:
             try:
-                explainer = _load_shap().TreeExplainer(estimator, model_output="probability")
+                explainer = _load_shap().TreeExplainer(
+                    estimator, model_output="probability", check_additivity=False
+                )
                 output_space = OUTPUT_SPACE_PROBABILITY
             except Exception:  # noqa: BLE001 - fall back to the library default
-                explainer = _load_shap().TreeExplainer(estimator)
+                explainer = _load_shap().TreeExplainer(estimator, check_additivity=False)
                 output_space = OUTPUT_SPACE_RAW
         else:
             # scikit-learn tree ensembles expose probability-like leaf
             # values for classifiers, so the default tree output is the
             # probability used by predict_proba.
-            explainer = _load_shap().TreeExplainer(estimator)
+            explainer = _load_shap().TreeExplainer(estimator, check_additivity=False)
             output_space = (
                 OUTPUT_SPACE_PROBABILITY
                 if hasattr(estimator, "predict_proba")
@@ -416,7 +418,7 @@ class ExplainerFactory:
 
         def _explain(frame: pd.DataFrame) -> np.ndarray:
             matrix = transform(preprocessor, frame)
-            values = explainer.shap_values(matrix)
+            values = explainer.shap_values(matrix, check_additivity=False)
             return _select_binary_shap(values)
 
         def _predict(frame: pd.DataFrame) -> np.ndarray:

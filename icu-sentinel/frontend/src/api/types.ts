@@ -158,6 +158,7 @@ export interface ReplayState {
   timeline: TimelineHourSummary;
   observations: ObservationValue[];
   prediction: PredictionResult;
+  predictions: PredictionResult[];
   alert: AlertRecord | null;
   alert_status: string;
   alert_error: string | null;

@@ -102,6 +102,17 @@ class ReplayEngine:
         context = self._build_context(patient_id, hour)
         prediction = self.provider.predict(context)
 
+        # Collect predictions from all wrapped models (real mode) or just
+        # the single provider (synthetic mode).
+        predictions: list = [prediction]
+        if hasattr(self.provider, "predict_all"):
+            try:
+                all_preds = self.provider.predict_all(context)
+                if all_preds:
+                    predictions = list(all_preds)
+            except Exception:  # noqa: BLE001 - never break replay for extra models
+                predictions = [prediction]
+
         alert: AlertRecord | None = None
         alert_status = "not_available" if not prediction.available else "not_evaluated"
         alert_error: str | None = None
@@ -138,6 +149,7 @@ class ReplayEngine:
             timeline=timeline_hour,
             observations=observations,
             prediction=prediction,
+            predictions=predictions,
             alert=alert,
             alert_status=alert_status,
             alert_error=alert_error,

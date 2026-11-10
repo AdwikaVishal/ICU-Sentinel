@@ -81,6 +81,7 @@ class ReplayState(BaseModel):
     timeline: TimelineHourSummary
     observations: list[ObservationValue]
     prediction: PredictionResult
+    predictions: list[PredictionResult] = Field(default_factory=list)
     alert: AlertRecord | None = None
     alert_status: str = "not_evaluated"
     alert_error: str | None = None

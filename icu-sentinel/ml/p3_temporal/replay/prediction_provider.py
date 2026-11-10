@@ -156,9 +156,15 @@ class SyntheticHeuristicProvider(BasePredictionProvider):
 class ModelPredictionProvider(BasePredictionProvider):
     """Prediction provider backed by a fitted scikit-learn-compatible model."""
 
-    def __init__(self, bundle: ModelBundle) -> None:
+    def __init__(
+        self,
+        bundle: ModelBundle,
+        *,
+        threshold: float | None = None,
+    ) -> None:
         super().__init__(bundle.identity)
         self.bundle = bundle
+        self.threshold = threshold
 
     @property
     def required_features(self) -> list[str] | None:
@@ -218,7 +224,20 @@ class ModelPredictionProvider(BasePredictionProvider):
                 pass
         if not math.isfinite(probability) or not 0.0 <= probability <= 1.0:
             return self._unavailable(context, "Model returned a non-finite probability.")
-        return self._available_result(context, probability)
+        result = self._available_result(context, probability)
+        # Apply threshold for predicted_class when configured.
+        if self.threshold is not None:
+            result = result.model_copy(
+                update={
+                    "threshold": self.threshold,
+                    "predicted_class": int(probability >= self.threshold),
+                }
+            )
+        return result
+
+    def predict_all(self, context: PredictionContext) -> list["PredictionResult"]:
+        """Return predictions from this single provider as a one-item list."""
+        return [self.predict(context)]
 
 
 class UnavailableProvider(BasePredictionProvider):
@@ -254,6 +273,78 @@ def provider_from_bundle(bundle: ModelBundle | None) -> PredictionProvider:
     if bundle is None:
         return UnavailableProvider("No model artifact or demonstration model is available.")
     return ModelPredictionProvider(bundle)
+
+
+class MultiModelPredictionProvider(BasePredictionProvider):
+    """Prediction provider that wraps multiple fitted model providers.
+
+    Returns predictions from every wrapped model so the replay engine can
+    surface Extra Trees and XGBoost results side by side. The primary
+    ``predict`` call returns the first provider's result for backward
+    compatibility; ``predict_all`` returns all provider results.
+    """
+
+    def __init__(
+        self,
+        providers: dict[str, ModelPredictionProvider],
+        *,
+        primary_model_name: str | None = None,
+    ) -> None:
+        if not providers:
+            raise ValueError("MultiModelPredictionProvider requires at least one provider")
+        self._providers = dict(providers)
+        first = next(iter(self._providers.values()))
+        super().__init__(first.identity)
+        self.primary_model_name = primary_model_name or first.identity.name
+
+    @property
+    def identity(self) -> ModelIdentity:
+        # Return the primary model's identity for protocol compatibility.
+        primary = self._providers.get(self.primary_model_name)
+        if primary is not None:
+            return primary.identity
+        return next(iter(self._providers.values())).identity
+
+    @property
+    def required_features(self) -> list[str] | None:
+        # Union of required features across all providers.
+        seen: set[str] = set()
+        union: list[str] = []
+        for provider in self._providers.values():
+            for feature in provider.required_features or []:
+                if feature not in seen:
+                    seen.add(feature)
+                    union.append(feature)
+        return union if union else None
+
+    def status(self) -> ProviderStatus:
+        return ProviderStatus(
+            available=True,
+            provider_name="multi-model:" + ",".join(sorted(self._providers)),
+            model=self.identity,
+            required_features=self.required_features,
+        )
+
+    def predict(self, context: PredictionContext) -> PredictionResult:
+        primary = self._providers.get(self.primary_model_name)
+        if primary is None:
+            primary = next(iter(self._providers.values()))
+        return primary.predict(context)
+
+    def predict_all(self, context: PredictionContext) -> list[PredictionResult]:
+        """Return predictions from every wrapped provider."""
+        results: list[PredictionResult] = []
+        for name in sorted(self._providers):
+            provider = self._providers[name]
+            result = provider.predict(context)
+            results.append(result)
+        return results
+
+    def provider_for(self, model_name: str) -> ModelPredictionProvider | None:
+        return self._providers.get(model_name)
+
+    def list_models(self) -> list[str]:
+        return sorted(self._providers)
 
 
 def safe_probability(value: Any) -> float | None:

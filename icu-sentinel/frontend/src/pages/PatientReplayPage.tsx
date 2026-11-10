@@ -23,6 +23,9 @@ export function PatientReplayPage() {
     }
   }, [patients.data, selected]);
 
+  const dataSource = replay.state?.data_source ?? patients.data?.data_source ?? "";
+  const isSynthetic = replay.state?.is_synthetic ?? patients.data?.is_synthetic ?? false;
+
   return (
     <div className="page">
       <div className="page__heading">
@@ -32,6 +35,15 @@ export function PatientReplayPage() {
             Step through recorded hours. The prediction at each hour uses only that
             hour and earlier observations.
           </p>
+        </div>
+        <div className="data-source-strip">
+          <span className="muted small">Data source</span>
+          <SourceBadge
+            source={
+              isSynthetic ? "synthetic_demo_model" : "p2_boosting_model"
+            }
+          />
+          <span className="muted small">{dataSource}</span>
         </div>
       </div>
 

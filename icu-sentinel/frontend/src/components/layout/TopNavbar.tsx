@@ -12,6 +12,10 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
+import { replayApi } from "../../api/client";
+import type { ProviderStatus } from "../../api/types";
+import { useAsync, type AsyncResource } from "../../hooks/useAsync";
+
 const LINKS = [
   { to: "/", label: "Home", end: true },
   { to: "/replay", label: "Patient Replay" },
@@ -55,12 +59,23 @@ export function TopNavbar({
   const notificationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
+  const provider: AsyncResource<ProviderStatus> = useAsync(
+    (signal) => replayApi.getProviderStatus(signal),
+    [],
+  );
+
   useDismiss(
     notificationRef,
     () => setNotificationsOpen(false),
     notificationsOpen,
   );
   useDismiss(profileRef, () => setProfileOpen(false), profileOpen);
+
+  const dataSourceLabel = provider.data
+    ? provider.data.model?.source === "p2_boosting_model"
+      ? "Real PhysioNet data · P2 boosting models"
+      : "Synthetic demonstration cohort"
+    : "—";
 
   return (
     <header className="topbar">
@@ -81,6 +96,9 @@ export function TopNavbar({
       </NavLink>
 
       <div className="topbar__context">
+        <span className={`data-source-badge ${provider.data?.model?.source === "p2_boosting_model" ? "badge--model" : "badge--synthetic"}`}>
+          {dataSourceLabel}
+        </span>
         <CalendarDays size={15} aria-hidden="true" />
         <span>ICU clinical workspace</span>
       </div>
